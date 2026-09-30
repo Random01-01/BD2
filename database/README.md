@@ -5,6 +5,7 @@
 | `01_schema.sql` | Tabelas, restrições (incluindo a prevenção de conflito de horários) e a view `vw_agenda` |
 | `02_seed_dev.sql` | Dados de teste (**somente desenvolvimento**). Login: `admin@mariana.com` / `admin123` |
 | `03_testes_regras.sql` | 16 verificações das regras de negócio; roda em transação e termina com `ROLLBACK` |
+| `04_supabase_seguranca.sql` | **Só no Supabase:** liga RLS e retira acesso público (anon) às tabelas |
 
 ```bash
 createdb sistema_agendamento
