@@ -9,7 +9,7 @@ export const config = {
   port: int(process.env.PORT, 3001),
   databaseUrl: process.env.DATABASE_URL,
   dbSsl: process.env.DB_SSL === 'true',
-  modoDemo: process.env.MODO_DEMO === 'true',
+  modoDemo: process.env.MODO_DEMO === 'true' || process.argv.includes('--demo'),
   jwtSecret: process.env.JWT_SECRET,
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   statusInicial: process.env.STATUS_INICIAL === 'PENDENTE' ? 'PENDENTE' : 'CONFIRMADO',

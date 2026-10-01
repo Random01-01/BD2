@@ -100,6 +100,8 @@ npm run dev                           # abra http://localhost:5173
 
 No modo demo nada é gravado em banco; os dados somem ao reiniciar. Serve para ver e mostrar a interface.
 
+> **Os dois terminais precisam ficar abertos ao mesmo tempo.** Se o site mostrar "Servidor indisponível" ou "Ocorreu um erro" ao entrar, ou se o terminal do site mostrar `http proxy error ... ECONNREFUSED`, a **API (terminal 1) não está rodando**. Confira se o terminal 1 mostra `API no ar: http://localhost:3001/api/saude` e teste esse endereço no navegador.
+
 ### 4.2 Rodar com o MySQL de verdade
 
 **A) MySQL Workbench**

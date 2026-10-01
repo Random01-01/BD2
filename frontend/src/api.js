@@ -13,7 +13,10 @@ async function req(caminho, { method = 'GET', corpo, token } = {}) {
   let dados = null;
   try { dados = await resposta.json(); } catch { /* corpo vazio */ }
   if (!resposta.ok) {
-    const e = new Error(dados?.erro || 'Ocorreu um erro. Tente novamente.');
+    const semApi = !dados && resposta.status >= 500; // proxy sem resposta da API
+    const e = new Error(dados?.erro || (semApi
+      ? 'Servidor indisponível. Confira se a API está rodando (cd backend && npm run demo ou npm run dev).'
+      : 'Ocorreu um erro. Tente novamente.'));
     e.status = resposta.status;
     e.detalhes = dados?.detalhes;
     throw e;

@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 // O navegador fala só com o Vite; o Vite repassa /api para o backend (sem CORS e sem "localhost" no código).
-const alvoApi = process.env.API_URL || 'http://localhost:3001';
+const alvoApi = process.env.API_URL || 'http://127.0.0.1:3001';
 
 export default defineConfig({
   plugins: [react()],
