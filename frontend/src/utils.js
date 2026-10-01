@@ -43,3 +43,15 @@ export const linkWhatsApp = (telefone) => {
   const n = soDigitos(telefone);
   return `https://wa.me/${n.startsWith('55') ? n : `55${n}`}`;
 };
+
+export const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+export const DIAS_CURTOS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+export const diaDaSemana = (data) => new Date(`${data}T12:00:00Z`).getUTCDay();
+
+/** Segunda-feira da semana que contém `data` */
+export function inicioDaSemana(data) {
+  const dow = diaDaSemana(data);
+  return somarDias(data, dow === 0 ? -6 : 1 - dow);
+}
+
+export const dataMuitoCurta = (data) => data.split('-').reverse().slice(0, 2).join('/');

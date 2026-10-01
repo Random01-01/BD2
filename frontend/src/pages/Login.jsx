@@ -1,22 +1,23 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 
 export default function Login() {
   const { sessao, entrar } = useAuth();
   const navegar = useNavigate();
+  const destino = useLocation().state?.de || '/admin';
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
 
-  if (sessao) return <Navigate to="/admin" replace />;
+  if (sessao) return <Navigate to={destino} replace />;
 
   async function enviar(e) {
     e.preventDefault();
     setErro(''); setEnviando(true);
-    try { entrar(await api.login(email, senha)); navegar('/admin'); }
+    try { entrar(await api.login(email, senha)); navegar(destino, { replace: true }); }
     catch (err) { setErro(err.message); }
     finally { setEnviando(false); }
   }

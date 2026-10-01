@@ -1,14 +1,19 @@
 import { useEffect } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
-import Agenda from './pages/Agenda.jsx';
+import AdminLayout from './pages/admin/AdminLayout.jsx';
+import Agenda from './pages/admin/Agenda.jsx';
+import Dashboard from './pages/admin/Dashboard.jsx';
+import Horarios from './pages/admin/Horarios.jsx';
+import Servicos from './pages/admin/Servicos.jsx';
 import Agendar from './pages/Agendar.jsx';
 import CancelarAgendamento from './pages/CancelarAgendamento.jsx';
 import Login from './pages/Login.jsx';
 
 function RotaProtegida({ children }) {
   const { sessao } = useAuth();
-  return sessao ? children : <Navigate to="/admin/login" replace />;
+  const { pathname } = useLocation();
+  return sessao ? children : <Navigate to="/admin/login" replace state={{ de: pathname }} />;
 }
 
 export default function App() {
@@ -23,7 +28,7 @@ export default function App() {
     <>
       <a className="pular" href="#conteudo">Pular para o conteúdo</a>
       <header className="topo">
-        <div className="topo__interno">
+        <div className={admin && sessao ? 'topo__interno topo__interno--largo' : 'topo__interno'}>
           <Link to="/" className="marca">✂ Agendamento<span className="marca__sub"> online</span></Link>
           <nav aria-label="Principal" className="topo__nav">
             {!admin && <Link to="/cancelar">Cancelar horário</Link>}
@@ -39,12 +44,17 @@ export default function App() {
         </div>
       </header>
 
-      <main id="conteudo" tabIndex={-1} className="conteudo">
+      <main id="conteudo" tabIndex={-1} className={admin && sessao ? 'conteudo conteudo--largo' : 'conteudo'}>
         <Routes>
           <Route path="/" element={<Agendar />} />
           <Route path="/cancelar" element={<CancelarAgendamento />} />
           <Route path="/admin/login" element={<Login />} />
-          <Route path="/admin" element={<RotaProtegida><Agenda /></RotaProtegida>} />
+          <Route path="/admin" element={<RotaProtegida><AdminLayout /></RotaProtegida>}>
+            <Route index element={<Dashboard />} />
+            <Route path="agenda" element={<Agenda />} />
+            <Route path="servicos" element={<Servicos />} />
+            <Route path="horarios" element={<Horarios />} />
+          </Route>
           <Route path="*" element={<p>Página não encontrada. <Link to="/">Voltar ao início</Link></p>} />
         </Routes>
       </main>

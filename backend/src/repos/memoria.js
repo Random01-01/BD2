@@ -18,8 +18,8 @@ export function criarRepoMemoria({ fuso = 'America/Sao_Paulo' } = {}) {
       { id_servico: 3, id_profissional: 1, id_categoria: 1, nome: 'Coloração', descricao: 'Coloração completa', preco: 150, duracao_minutos: 120, ativo: true },
       { id_servico: 4, id_profissional: 1, id_categoria: 2, nome: 'Design de sobrancelha', descricao: 'Design com henna', preco: 50, duracao_minutos: 30, ativo: true },
     ],
-    janelas: [1, 2, 3, 4, 5].map((d) => ({ id_profissional: 1, dia: d, hora_inicio: '09:00', hora_fim: '18:00' }))
-      .concat([{ id_profissional: 1, dia: 6, hora_inicio: '09:00', hora_fim: '13:00' }]),
+    janelas: [[1, '09:00', '18:00'], [2, '09:00', '18:00'], [3, '09:00', '18:00'], [4, '09:00', '18:00'], [5, '09:00', '18:00'], [6, '09:00', '13:00']]
+      .map(([dia, hora_inicio, hora_fim], i) => ({ id_horario: i + 1, id_profissional: 1, dia, hora_inicio, hora_fim })),
     bloqueios: [],
     clientes: [
       { id_cliente: 1, nome: 'Ana Paula', telefone: '(18) 98888-2222', email: 'ana@email.com' },
@@ -28,9 +28,10 @@ export function criarRepoMemoria({ fuso = 'America/Sao_Paulo' } = {}) {
     ],
     agendamentos: [],
     usuarios: [{ id_usuario: 1, id_profissional: 1, nome: 'Mariana Admin', email: 'admin@mariana.com', senha_hash: bcrypt.hashSync('admin123', 10), perfil: 'ADMIN' }],
-    seq: { cliente: 3, agendamento: 0 },
+    seq: { cliente: 3, agendamento: 0, servico: 4, categoria: 3, horario: 0, bloqueio: 0 },
   };
 
+  db.seq.horario = db.janelas.length;
   const semDigitos = (t) => String(t).replace(/\D/g, '');
   const ativo = (a) => a.status !== 'CANCELADO';
   const sobrepoe = (a, b) => paraMinutos(a.hora_inicio) < paraMinutos(b.hora_fim) && paraMinutos(a.hora_fim) > paraMinutos(b.hora_inicio);
@@ -92,6 +93,96 @@ export function criarRepoMemoria({ fuso = 'America/Sao_Paulo' } = {}) {
     },
     async atualizarStatus({ id, status, motivo }) {
       Object.assign(db.agendamentos.find((a) => a.id_agendamento === id), { status, motivo_cancelamento: motivo });
+    },
+
+    // ===== Painel =====
+    async listarServicosAdmin(idProf) {
+      return db.servicos.filter((s) => s.id_profissional === idProf)
+        .map((s) => ({ ...s, categoria: db.categorias.find((c) => c.id_categoria === s.id_categoria)?.nome ?? null }))
+        .sort((a, b) => Number(b.ativo) - Number(a.ativo) || a.nome.localeCompare(b.nome));
+    },
+    async obterServicoAdmin(id, idProf) {
+      const s = db.servicos.find((x) => x.id_servico === id && x.id_profissional === idProf);
+      return s ? { ...s, categoria: db.categorias.find((c) => c.id_categoria === s.id_categoria)?.nome ?? null } : null;
+    },
+    async criarServico(idProf, d) {
+      const s = { id_servico: ++db.seq.servico, id_profissional: idProf, ...d };
+      db.servicos.push(s);
+      return this.obterServicoAdmin(s.id_servico, idProf);
+    },
+    async atualizarServico(id, idProf, d) {
+      const s = db.servicos.find((x) => x.id_servico === id && x.id_profissional === idProf);
+      if (!s) return null;
+      Object.assign(s, d);
+      return this.obterServicoAdmin(id, idProf);
+    },
+    async excluirServico(id, idProf) {
+      const i = db.servicos.findIndex((x) => x.id_servico === id && x.id_profissional === idProf);
+      if (i < 0) return false;
+      if (db.agendamentos.some((a) => a.id_servico === id)) throw new ConflitoError('Este serviço já tem agendamentos. Desative-o em vez de excluir.');
+      db.servicos.splice(i, 1);
+      return true;
+    },
+    async listarCategorias() {
+      return db.categorias.map((c) => ({ ...c, qtd_servicos: db.servicos.filter((s) => s.id_categoria === c.id_categoria).length }))
+        .sort((a, b) => a.nome.localeCompare(b.nome));
+    },
+    async categoriaExiste(id) { return db.categorias.some((c) => c.id_categoria === id); },
+    async criarCategoria(nome) {
+      if (db.categorias.some((c) => c.nome.toLowerCase() === nome.toLowerCase())) throw new ConflitoError('Já existe uma categoria com esse nome.');
+      const c = { id_categoria: ++db.seq.categoria, nome };
+      db.categorias.push(c);
+      return { ...c, qtd_servicos: 0 };
+    },
+    async atualizarCategoria(id, nome) {
+      const c = db.categorias.find((x) => x.id_categoria === id);
+      if (!c) return null;
+      if (db.categorias.some((x) => x.id_categoria !== id && x.nome.toLowerCase() === nome.toLowerCase())) throw new ConflitoError('Já existe uma categoria com esse nome.');
+      c.nome = nome;
+      return { id_categoria: id, nome };
+    },
+    async excluirCategoria(id) {
+      const i = db.categorias.findIndex((x) => x.id_categoria === id);
+      if (i < 0) return false;
+      db.categorias.splice(i, 1);
+      db.servicos.forEach((s) => { if (s.id_categoria === id) s.id_categoria = null; });
+      return true;
+    },
+    async listarHorarios(idProf) {
+      return db.janelas.filter((j) => j.id_profissional === idProf)
+        .map((j) => ({ id_horario: j.id_horario, dia_semana: j.dia, hora_inicio: j.hora_inicio, hora_fim: j.hora_fim }))
+        .sort((a, b) => a.dia_semana - b.dia_semana || a.hora_inicio.localeCompare(b.hora_inicio));
+    },
+    async criarHorario(idProf, { dia_semana, hora_inicio, hora_fim }) {
+      const j = { id_horario: ++db.seq.horario, id_profissional: idProf, dia: dia_semana, hora_inicio, hora_fim };
+      db.janelas.push(j);
+      return { id_horario: j.id_horario, dia_semana, hora_inicio, hora_fim };
+    },
+    async excluirHorario(id, idProf) {
+      const i = db.janelas.findIndex((j) => j.id_horario === id && j.id_profissional === idProf);
+      if (i < 0) return false;
+      db.janelas.splice(i, 1);
+      return true;
+    },
+    async listarBloqueios(idProf, aPartirDe) {
+      return db.bloqueios.filter((b) => b.id_profissional === idProf && b.data_fim >= aPartirDe)
+        .map(({ id_bloqueio, data_inicio, data_fim, motivo }) => ({ id_bloqueio, data_inicio, data_fim, motivo }))
+        .sort((a, b) => a.data_inicio.localeCompare(b.data_inicio));
+    },
+    async criarBloqueio(idProf, { data_inicio, data_fim, motivo }) {
+      const b = { id_bloqueio: ++db.seq.bloqueio, id_profissional: idProf, data_inicio, data_fim, motivo };
+      db.bloqueios.push(b);
+      return { id_bloqueio: b.id_bloqueio, data_inicio, data_fim, motivo };
+    },
+    async excluirBloqueio(id, idProf) {
+      const i = db.bloqueios.findIndex((b) => b.id_bloqueio === id && b.id_profissional === idProf);
+      if (i < 0) return false;
+      db.bloqueios.splice(i, 1);
+      return true;
+    },
+    async contarAgendamentosAtivos(idProf, ini, fim) {
+      return db.agendamentos.filter((a) => a.id_profissional === idProf && a.data_agendamento >= ini && a.data_agendamento <= fim
+        && ['PENDENTE', 'CONFIRMADO'].includes(a.status)).length;
     },
     async travarProfissional() {},
     async upsertCliente({ nome, telefone, email }) {

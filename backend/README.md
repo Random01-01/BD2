@@ -44,6 +44,11 @@ Corpo do `POST /api/agendamentos`:
 |---|---|---|
 | POST | `/api/auth/login` | `{ "email", "senha" }` → `{ token, usuario }` |
 | GET | `/api/admin/agenda?inicio=AAAA-MM-DD&fim=AAAA-MM-DD` | Agenda do período |
+| GET | `/api/admin/resumo` | Dashboard: hoje, 7 dias, pendentes, próximos |
+| GET/POST/PUT/DELETE | `/api/admin/servicos[/:id]` | Serviços (inclui inativos) |
+| GET/POST/PUT/DELETE | `/api/admin/categorias[/:id]` | Categorias |
+| GET/POST/DELETE | `/api/admin/horarios[/:id]` | Janelas de atendimento (`dia_semana` 0–6) |
+| GET/POST/DELETE | `/api/admin/bloqueios[/:id]` | Folgas e feriados (POST devolve `agendamentos_afetados`) |
 | PATCH | `/api/admin/agendamentos/:id` | `{ "status": "CONFIRMADO\|CONCLUIDO\|CANCELADO", "motivo_cancelamento": "..." }` |
 
 Transições permitidas: `PENDENTE → CONFIRMADO/CANCELADO`, `CONFIRMADO → CONCLUIDO/CANCELADO`.

@@ -350,7 +350,10 @@ POST   /api/agendamentos/:id/cancelar         # público/admin – cancela com m
 POST   /api/auth/login                        # admin
 GET    /api/admin/agenda?inicio=&fim=         # admin
 PATCH  /api/admin/agendamentos/:id            # admin – status/remarcar
-# a fazer (Quinzena 5): CRUD /api/admin/servicos | categorias | horarios | bloqueios | clientes
+GET    /api/admin/resumo                       # admin – dashboard
+*      /api/admin/servicos | categorias        # admin – CRUD (excluir serviço com agendamento → 409)
+*      /api/admin/horarios | bloqueios         # admin – janelas de atendimento e folgas
+# a fazer: /api/admin/clientes, relatórios e conta de cliente (etapas 2 e 3)
 ```
 
 ### Estrutura de pastas

@@ -103,12 +103,103 @@ describe('painel da profissional', () => {
     await user.clear(screen.getByLabelText('Senha'));
     await user.type(screen.getByLabelText('Senha'), 'admin123');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
+    expect(await screen.findByRole('heading', { name: /^Olá, / })).toBeInTheDocument(); // dashboard
+    expect(await screen.findByText('Próximos atendimentos')).toBeInTheDocument();
+
+    await user.click(within(screen.getByRole('navigation', { name: 'Painel da profissional' })).getByRole('link', { name: /Agenda/ }));
     expect(await screen.findByRole('heading', { name: 'Agenda' })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Dia'), { target: { value: proximaData(2, hojeSP(), 2) } });
+    fireEvent.change(screen.getByLabelText('Data'), { target: { value: proximaData(2, hojeSP(), 2) } });
     const juliana = await screen.findByText('Juliana Santos');
     const cartao = juliana.closest('li');
     await user.click(within(cartao).getByRole('button', { name: 'Concluir' }));
     await waitFor(() => expect(within(screen.getByText('Juliana Santos').closest('li')).getByText('Concluído')).toBeInTheDocument());
+  });
+});
+
+async function entrar(user, rota) {
+  abrir(rota);
+  if (sessionStorage.length) return; // já logado nesta sessão de teste
+  await user.type(await screen.findByLabelText('E-mail'), 'admin@mariana.com');
+  await user.type(screen.getByLabelText('Senha'), 'admin123');
+  await user.click(screen.getByRole('button', { name: 'Entrar' }));
+}
+
+describe('painel: agenda semanal, serviços e horários', () => {
+  it('mostra a semana e abre o dia ao clicar no cabeçalho', async () => {
+    const user = userEvent.setup();
+    await entrar(user, '/admin/agenda');
+    expect(await screen.findByRole('heading', { name: 'Agenda' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Semana' }));
+    fireEvent.change(screen.getByLabelText('Data'), { target: { value: proximaData(2, hojeSP(), 2) } });
+    expect(await screen.findByText('Juliana Santos')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^Ter / }));
+    expect((await screen.findAllByRole('button', { name: /Confirmar|Concluir|Cancelar/ })).length).toBeGreaterThan(0); // visão do dia
+  });
+
+  it('cria, desativa e exclui um serviço, e o site do cliente acompanha', async () => {
+    const user = userEvent.setup();
+    await entrar(user, '/admin/servicos');
+    await user.click(await screen.findByRole('button', { name: '+ Novo serviço' }));
+    await user.type(screen.getByLabelText('Nome'), 'Hidratação profunda');
+    await user.type(screen.getByLabelText('Preço (R$)'), '85.5');
+    await user.clear(screen.getByLabelText('Duração (minutos)'));
+    await user.type(screen.getByLabelText('Duração (minutos)'), '45');
+    await user.selectOptions(screen.getByLabelText('Categoria'), 'Cabelo');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(await screen.findByText('Serviço criado.')).toBeInTheDocument();
+    expect(await screen.findByText('Hidratação profunda')).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: 'Desativar Hidratação profunda' }));
+    expect(await screen.findByText('Serviço desativado.')).toBeInTheDocument();
+    expect(await screen.findByText('Inativo')).toBeInTheDocument();
+    cleanup();
+
+    abrir('/'); // página do cliente não lista o inativo
+    expect(await screen.findByLabelText(/Escova/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Hidratação profunda/)).toBeNull();
+    cleanup();
+
+    await entrar(user, '/admin/servicos');
+    const cartao = (await screen.findByText('Hidratação profunda')).closest('li');
+    await user.click(within(cartao).getByRole('button', { name: 'Excluir' }));
+    await user.click(within(cartao).getByRole('button', { name: /^Sim/ }));
+    expect(await screen.findByText('Serviço excluído.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Hidratação profunda')).toBeNull());
+  });
+
+  it('serviço com agendamentos mostra erro ao excluir; categorias duplicadas são recusadas', async () => {
+    const user = userEvent.setup();
+    await entrar(user, '/admin/servicos');
+    const cartao = (await screen.findByText('Corte feminino')).closest('li');
+    await user.click(within(cartao).getByRole('button', { name: 'Excluir' }));
+    await user.click(within(cartao).getByRole('button', { name: /^Sim/ }));
+    expect(await screen.findByText(/Desative-o em vez de excluir/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Categorias' }));
+    await user.type(screen.getByLabelText('Nova categoria'), 'cabelo');
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+    expect(await screen.findByText(/Já existe uma categoria/)).toBeInTheDocument();
+  });
+
+  it('adiciona e remove horário de atendimento e cadastra folga com aviso de agendamentos', async () => {
+    const user = userEvent.setup();
+    await entrar(user, '/admin/horarios');
+    expect(await screen.findByRole('heading', { name: 'Horários e folgas' })).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Dia'), 'Domingo');
+    await user.click(within(screen.getByRole('form', { name: 'Adicionar horário de atendimento' })).getByRole('button', { name: 'Adicionar' }));
+    expect(await screen.findByText('Horário de atendimento adicionado.')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: /Remover 09:00 às 18:00 de Domingo/ }));
+    expect(await screen.findByText('Horário removido.')).toBeInTheDocument();
+
+    // sobreposição (segunda já tem 09-18)
+    await user.selectOptions(screen.getByLabelText('Dia'), 'Segunda-feira');
+    await user.click(within(screen.getByRole('form', { name: 'Adicionar horário de atendimento' })).getByRole('button', { name: 'Adicionar' }));
+    expect(await screen.findByText(/sobrepõe/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('De'), { target: { value: proximaData(2, hojeSP(), 2) } });
+    await user.click(within(screen.getByRole('form', { name: 'Adicionar folga' })).getByRole('button', { name: 'Adicionar' }));
+    expect(await screen.findByText(/já existem \d+ agendamento/)).toBeInTheDocument();
   });
 });

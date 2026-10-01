@@ -34,10 +34,12 @@ Sistema web para uma profissional autônoma da área da beleza (cenário inicial
 | API: login e agenda da profissional, mudar status | ✅ |
 | Site do cliente: escolher serviço → data/horário → dados → confirmação | ✅ |
 | Site do cliente: cancelar horário | ✅ |
-| Painel: login + agenda do dia (confirmar, concluir, cancelar) | ✅ |
-| Painel: cadastro de **serviços** e categorias | ⏳ Quinzena 5 |
-| Painel: **horários de atendimento** e folgas/feriados | ⏳ Quinzena 5 |
-| Painel: clientes e relatórios | ⏳ depois |
+| Painel: login + **dashboard** (hoje, próximos 7 dias, pendentes, próximos atendimentos) | ✅ |
+| Painel: **agenda** por dia e por semana (confirmar, concluir, cancelar) | ✅ |
+| Painel: cadastro de **serviços** e categorias (criar, editar, ativar/desativar, excluir) | ✅ |
+| Painel: **horários de atendimento** e folgas/feriados | ✅ |
+| Login de cliente (conta opcional, “Meus agendamentos”) | ⏳ próxima etapa |
+| Painel: clientes e relatórios | ⏳ etapa 3 |
 | Lembretes por WhatsApp | ⏳ melhoria futura (hoje só um link `wa.me`) |
 | Publicação na nuvem | ⏳ |
 | Auditoria de acessibilidade e validação com a profissional | ⏳ Quinzenas 5–6 |
@@ -164,11 +166,16 @@ Base: `/api`. Detalhes e exemplos em [`backend/README.md`](backend/README.md).
 | `POST /auth/login` | público | devolve token JWT |
 | `GET /admin/agenda?inicio=&fim=` | profissional | agenda do período |
 | `PATCH /admin/agendamentos/:id` | profissional | confirmar, concluir ou cancelar |
+| `GET /admin/resumo` | profissional | dados do dashboard |
+| `GET/POST /admin/servicos`, `PUT/DELETE /admin/servicos/:id` | profissional | serviços (inclui inativos). Com agendamentos, só desativa (409 ao excluir) |
+| `GET/POST /admin/categorias`, `PUT/DELETE /admin/categorias/:id` | profissional | categorias (nome único) |
+| `GET/POST /admin/horarios`, `DELETE /admin/horarios/:id` | profissional | janelas de atendimento (`dia_semana` 0=domingo…6=sábado); recusa sobreposição |
+| `GET/POST /admin/bloqueios`, `DELETE /admin/bloqueios/:id` | profissional | folgas/feriados; o POST informa `agendamentos_afetados` |
 
 ## 7. Testes
 ```bash
-cd backend  && npm test    # horários livres + API completa (19 testes)
-cd frontend && npm test    # fluxo do cliente e do painel ligados à API (5 testes)
+cd backend  && npm test    # horários livres + API pública e do painel (26 testes)
+cd frontend && npm test    # fluxo do cliente e do painel ligados à API (9 testes)
 ```
 Os testes não precisam de MySQL (usam o repositório em memória). A ligação com o MySQL real ainda precisa ser validada (ver seção 1).
 
@@ -199,8 +206,8 @@ Conforme o Plano de Ação.
 
 **Checklist da Quinzena 5**
 - [ ] Validar a API com o MySQL real (seção 4.2) e corrigir o que aparecer
-- [ ] Painel: CRUD de serviços e categorias
-- [ ] Painel: horários de atendimento e folgas
+- [x] Painel: CRUD de serviços e categorias
+- [x] Painel: horários de atendimento e folgas
 - [ ] Trocar os dados fictícios pelos serviços, preços e horários reais da profissional
 - [ ] Acessibilidade: testar com teclado, leitor de tela e celular
 - [ ] Publicar na nuvem (API + MySQL + site)

@@ -3,6 +3,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { assinarToken, exigirLogin } from '../auth.js';
 import { dataValida } from '../datas.js';
+import { rotasPainel } from './painel.js';
 
 const TRANSICOES = {
   PENDENTE: ['CONFIRMADO', 'CANCELADO'],
@@ -27,6 +28,7 @@ export function rotasAdmin(repo, config) {
 
   const protegido = Router();
   protegido.use(exigirLogin(config.jwtSecret));
+  protegido.use(rotasPainel(repo, config));
 
   // Agenda num período: /api/admin/agenda?inicio=2026-10-05&fim=2026-10-11
   protegido.get('/agenda', async (req, res) => {
