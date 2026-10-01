@@ -1,33 +1,221 @@
 # Sistema Web para Gestão de Serviços e Agendamentos
 
-Projeto Integrador em Computação II — UNIVESP, Grupo 4. Sistema de agendamento para uma profissional autônoma da área da beleza, acessível por computador e celular.
+> Uma solução tecnológica para profissionais autônomos — **Projeto Integrador em Computação II · UNIVESP · Grupo 4** · Polos Guararapes, Araçatuba e Ilha Solteira · 2026
 
-| Pasta | O quê |
+Sistema web para uma profissional autônoma da área da beleza (cenário inicial: cabeleireira) organizar **serviços, preços e horários de atendimento**, enquanto os **clientes consultam horários livres e agendam sozinhos**, pelo computador ou pelo celular. O objetivo é acabar com os conflitos de horário causados pelo controle manual (caderno e WhatsApp).
+
+**Integrantes:** Amanda Rodrigues Pinheiro · Edinaldo Cruz da Silva · Lucas Barcello Daloco · Marcela Natália Liberato Giacometti · Mayer Marinho Leandro · Nicolas Caliel Picussa · Samara da Silva Nascimento
+
+---
+
+## Sumário
+1. [Situação atual](#1-situação-atual)
+2. [Tecnologias](#2-tecnologias)
+3. [Estrutura do repositório](#3-estrutura-do-repositório)
+4. [Primeiros passos (do zero)](#4-primeiros-passos-do-zero)
+5. [Como o sistema funciona](#5-como-o-sistema-funciona)
+6. [API](#6-api)
+7. [Testes](#7-testes)
+8. [Como trabalhamos (Git)](#8-como-trabalhamos-git)
+9. [Segurança](#9-segurança)
+10. [Cronograma e próximos passos](#10-cronograma-e-próximos-passos)
+11. [Decisões em aberto](#11-decisões-em-aberto)
+12. [Documentação](#12-documentação)
+
+---
+
+## 1. Situação atual
+
+| Funcionalidade | Estado |
 |---|---|
-| `frontend/` | Interface em React (Vite): agendamento do cliente + painel da profissional |
-| `backend/` | API REST em Node.js + Express |
-| `database/mysql/` | Scripts MySQL (banco do Relatório Parcial + melhorias) |
-| `docs/` | Modelagem, fluxos e revisão do Relatório Parcial |
+| Banco de dados MySQL (7 tabelas + trigger anti-conflito) — Relatório Parcial | ✅ |
+| Melhorias do banco (`preco_cobrado`, validações, folgas) | ✅ script pronto (`02_melhorias.sql`) |
+| API: serviços, horários livres, agendar, cancelar | ✅ |
+| API: login e agenda da profissional, mudar status | ✅ |
+| Site do cliente: escolher serviço → data/horário → dados → confirmação | ✅ |
+| Site do cliente: cancelar horário | ✅ |
+| Painel: login + agenda do dia (confirmar, concluir, cancelar) | ✅ |
+| Painel: cadastro de **serviços** e categorias | ⏳ Quinzena 5 |
+| Painel: **horários de atendimento** e folgas/feriados | ⏳ Quinzena 5 |
+| Painel: clientes e relatórios | ⏳ depois |
+| Lembretes por WhatsApp | ⏳ melhoria futura (hoje só um link `wa.me`) |
+| Publicação na nuvem | ⏳ |
+| Auditoria de acessibilidade e validação com a profissional | ⏳ Quinzenas 5–6 |
 
-## Testar rápido (sem banco): modo demo
-Precisa de Node 18.11+ (de preferência 20+). Em dois terminais:
+> ⚠️ **Ainda não testado contra um MySQL real:** a camada `backend/src/repos/mysql.js` foi escrita e revisada, mas só foi executada com testes em memória. O primeiro passo no seu computador é a seção [4.2](#42-rodar-com-o-mysql-de-verdade).
 
-```bash
-# terminal 1 — API com dados fictícios em memória
-cd backend && npm install && npm run demo
+## 2. Tecnologias
 
-# terminal 2 — site
-cd frontend && npm install && npm run dev      # abra http://localhost:5173
+| Camada | Tecnologia |
+|---|---|
+| Interface | React 18 + Vite + React Router (CSS próprio, mobile-first) |
+| API | Node.js 18.11+ · Express · `mysql2` · JWT · bcrypt · helmet |
+| Banco | MySQL 8.0.16+ (MySQL Workbench 8.0.36 nos testes do Relatório Parcial) |
+| Testes | `node:test` (API) · Vitest + Testing Library (interface) |
+
+## 3. Estrutura do repositório
+
 ```
-Área da profissional: `http://localhost:5173/admin` — `admin@mariana.com` / `admin123`.
-
-## Rodar com MySQL de verdade
-1. Crie o banco: `database/mysql/README.md` (Workbench **ou** `docker compose up -d`).
-2. `cd backend && cp .env.example .env` e preencha `DATABASE_URL` e `JWT_SECRET` (**nunca** faça commit do `.env`: o repositório é público).
-3. `npm run dev` no `backend/` e no `frontend/`.
-
-## Testes
-```bash
-cd backend  && npm test     # regras de horários e API (repositório em memória)
-cd frontend && npm test     # fluxo do cliente e do painel, ligado à API
+BD2/
+├── frontend/              # React: site do cliente e painel da profissional
+├── backend/               # API Node/Express
+│   └── src/repos/         #   mysql.js (toda a SQL) e memoria.js (testes/demo)
+├── database/
+│   ├── mysql/             # 01 (original), 02 (melhorias), 03 (senha de teste)
+│   └── postgres/          # versão alternativa — NÃO usada no momento
+├── docs/                  # modelagem, fluxos e revisão do Relatório Parcial
+├── docker-compose.yml     # MySQL local opcional
+├── PLANO DE AÇÃO GRUPO 4.pdf
+└── RELATÓRIO-PARCIAL-PI-2026.pdf
 ```
+
+## 4. Primeiros passos (do zero)
+
+### 4.0 Instale uma vez
+- **Git** — git-scm.com
+- **Node.js LTS** (20 ou 22) — nodejs.org (já inclui o `npm`)
+- **MySQL Server 8 + MySQL Workbench** — o mesmo usado no Relatório Parcial. *(Alternativa: Docker Desktop, seção 4.2-B.)*
+- Um editor, por exemplo o VS Code.
+
+Confira no terminal: `git --version`, `node -v` (precisa ser 18.11 ou maior) e `npm -v`.
+
+### 4.1 Baixar o projeto e testar sem banco (modo demo)
+```bash
+git clone https://github.com/Random01-01/BD2.git
+cd BD2
+git checkout arena/01a0efcc-bd2      # branch de trabalho atual
+
+# Terminal 1 — API com dados fictícios em memória
+cd backend
+npm install
+npm run demo
+
+# Terminal 2 — site
+cd frontend
+npm install
+npm run dev                           # abra http://localhost:5173
+```
+- Site do cliente: `http://localhost:5173`
+- Painel da profissional: `http://localhost:5173/admin` → `admin@mariana.com` / `admin123`
+
+No modo demo nada é gravado em banco; os dados somem ao reiniciar. Serve para ver e mostrar a interface.
+
+### 4.2 Rodar com o MySQL de verdade
+
+**A) MySQL Workbench**
+1. Conecte em `localhost:3306` com o seu usuário (ex.: `root`).
+2. Abra e execute, **nesta ordem**, os arquivos de `database/mysql/`:
+   `01_schema_original.sql` → `02_melhorias.sql` → `03_dev_admin.sql`.
+   (Rode o `02` só uma vez. Para recomeçar, rode o `01` de novo: ele recria o banco.)
+3. Confira: `SELECT VERSION();` deve ser 8.0.16 ou maior, e `SELECT * FROM servico;` deve listar 4 serviços.
+
+**B) Docker (alternativa)**: `docker compose up -d` na raiz já cria o banco com os 3 scripts. Usuário `root`, senha `agendamento_dev`.
+
+**Configurar e subir a API**
+```bash
+cd backend
+copy .env.example .env        # Mac/Linux: cp .env.example .env
+```
+Edite o `.env`:
+```
+DATABASE_URL=mysql://root:SUA_SENHA@localhost:3306/sistema_agendamento
+JWT_SECRET=um-texto-longo-e-aleatorio-com-mais-de-16-caracteres
+```
+Se a senha tiver caracteres especiais (`@`, `#`, `/`), escreva-os codificados (`@` → `%40`).
+```bash
+npm run dev
+```
+Abra `http://localhost:3001/api/saude` → deve aparecer `{"ok":true}`. Depois `http://localhost:3001/api/servicos` → lista dos serviços. Em outro terminal, `cd frontend && npm run dev` e use o site normalmente.
+
+**Se algo der erro**, anote a mensagem do terminal (sem a senha) e abra uma *issue* ou fale com o grupo.
+
+## 5. Como o sistema funciona
+
+### Fluxo do cliente
+1. Escolhe o **serviço** (agrupado por categoria, com preço e duração).
+2. Escolhe a **data**; o sistema mostra só os **horários livres**.
+3. Informa **nome e telefone** (e-mail e observação opcionais) e confirma.
+4. Recebe a confirmação com o **nº do agendamento**. Para cancelar, informa o nº e o telefone.
+
+### Regras de negócio
+- Horários livres = grade semanal da profissional − folgas/feriados − agendamentos não cancelados; nunca no passado; com antecedência mínima quando for hoje.
+- O horário oferecido respeita a **duração do serviço** (um serviço de 2 h só aparece se couber).
+- **Sem conflito de horário**, em duas camadas: a API confere e o **trigger do banco** é a palavra final (HTTP 409). Cada reserva roda em transação com trava na profissional, para que duas pessoas não consigam reservar o mesmo horário ao mesmo tempo.
+- O cliente é identificado pelo **telefone** (só dígitos): o mesmo telefone reaproveita o cadastro.
+- O preço é gravado em `preco_cobrado` no momento do agendamento (histórico não muda se o preço mudar).
+- Status: `PENDENTE → CONFIRMADO → CONCLUIDO`, ou `CANCELADO` (libera o horário).
+
+### Modelo de dados
+Diagramas (MER e fluxos) em [`docs/MODELAGEM.md`](docs/MODELAGEM.md). Tabelas: `profissional`, `usuario`, `categoria_servico`, `servico`, `horario_disponivel`, `bloqueio_agenda`, `cliente`, `agendamento`.
+
+## 6. API
+
+Base: `/api`. Detalhes e exemplos em [`backend/README.md`](backend/README.md).
+
+| Método e rota | Acesso | O que faz |
+|---|---|---|
+| `GET /saude` | público | API e banco no ar |
+| `GET /servicos` | público | serviços ativos |
+| `GET /disponibilidade?servico=&data=` | público | horários livres |
+| `POST /agendamentos` | público | cria agendamento (409 se ocupado) |
+| `POST /agendamentos/:id/cancelar` | público | cliente cancela (nº + telefone) |
+| `POST /auth/login` | público | devolve token JWT |
+| `GET /admin/agenda?inicio=&fim=` | profissional | agenda do período |
+| `PATCH /admin/agendamentos/:id` | profissional | confirmar, concluir ou cancelar |
+
+## 7. Testes
+```bash
+cd backend  && npm test    # horários livres + API completa (19 testes)
+cd frontend && npm test    # fluxo do cliente e do painel ligados à API (5 testes)
+```
+Os testes não precisam de MySQL (usam o repositório em memória). A ligação com o MySQL real ainda precisa ser validada (ver seção 1).
+
+## 8. Como trabalhamos (Git)
+- **Nunca** commitar o arquivo `.env`.
+- Antes de começar: `git pull`. Trabalhe em uma branch própria (`feature/nome-da-tarefa`) e abra *Pull Request* para revisão.
+- Mensagens de commit claras, em português: `Adiciona cadastro de serviços no painel`.
+- Alterou o banco? Atualize `database/mysql/` **e** o `docs/MODELAGEM.md`, e avise o grupo.
+- Antes do PR: `npm test` no `backend/` e no `frontend/`.
+
+## 9. Segurança
+- O repositório é **público**: senhas, tokens e a `DATABASE_URL` nunca entram no Git.
+- Senha do painel com bcrypt; sessão por JWT (8 h); limite de tentativas de login.
+- `admin123` e o `03_dev_admin.sql` são **só para desenvolvimento**. Em produção, defina senha forte própria.
+- Consultas SQL sempre parametrizadas.
+
+## 10. Cronograma e próximos passos
+
+Conforme o Plano de Ação.
+
+| Quinzena | Período | Foco | Situação |
+|---|---|---|---|
+| 3 | 07/09–20/09 | Modelagem do banco e fluxos | ✅ |
+| 4 | 21/09–30/09 | Estrutura inicial, API, protótipo React, **Relatório Parcial** | ✅ |
+| 5 | 05/10–18/10 | Serviços, disponibilidade/conflitos, integração, acessibilidade e responsividade, testes | 🔄 em andamento |
+| 6 | 19/10–01/11 | Testes funcionais e de integração, acessibilidade, validação com a profissional | — |
+| 7 | 02/11–06/11 | Vídeo e **Relatório Final** (entrega 06/11) | — |
+
+**Checklist da Quinzena 5**
+- [ ] Validar a API com o MySQL real (seção 4.2) e corrigir o que aparecer
+- [ ] Painel: CRUD de serviços e categorias
+- [ ] Painel: horários de atendimento e folgas
+- [ ] Trocar os dados fictícios pelos serviços, preços e horários reais da profissional
+- [ ] Acessibilidade: testar com teclado, leitor de tela e celular
+- [ ] Publicar na nuvem (API + MySQL + site)
+- [ ] Refazer o DER no Workbench após o `02_melhorias.sql`
+
+## 11. Decisões em aberto
+- [ ] O agendamento nasce `CONFIRMADO` ou `PENDENTE` (a profissional aprova)? → `STATUS_INICIAL` no `.env`
+- [ ] Prazo mínimo para o cliente cancelar?
+- [ ] Passo dos horários (30 min?) e antecedência mínima → `PASSO_MINUTOS` e `ANTECEDENCIA_MINUTOS`
+- [ ] **Pagamentos:** o relatório cita pagamentos, mas o sistema ainda não os controla — implementar ou retirar do texto?
+- [ ] **Banco:** o Plano de Ação cita PostgreSQL e o grupo seguiu com MySQL — registrar o motivo no Relatório Final
+
+## 12. Documentação
+- [`docs/MODELAGEM.md`](docs/MODELAGEM.md) — modelo de dados, fluxos e telas
+- [`docs/REVISAO_RELATORIO_PARCIAL.md`](docs/REVISAO_RELATORIO_PARCIAL.md) — o que ajustar no relatório
+- [`database/mysql/README.md`](database/mysql/README.md) — montar o banco
+- [`backend/README.md`](backend/README.md) — API em detalhe
+
+---
+*Este README é atualizado a cada etapa. Marque os itens concluídos nas listas acima.*
