@@ -29,3 +29,11 @@ export function agoraNoFuso(fuso, agora = new Date()) {
 }
 
 export const normalizarTelefone = (t) => String(t ?? '').replace(/\D/g, '');
+
+/** Próxima data (AAAA-MM-DD) que cai em `diaSemana` (0=Dom..6=Sáb), pelo menos `minDias` dias após `base`. */
+export function proximaData(diaSemana, base, minDias = 1) {
+  const d = new Date(`${base}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + minDias);
+  while (d.getUTCDay() !== diaSemana) d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}

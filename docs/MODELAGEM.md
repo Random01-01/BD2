@@ -4,41 +4,39 @@
 > Título provisório: *Sistema Web para Gestão de Serviços e Agendamentos: Uma Solução Tecnológica para Profissionais Autônomos*
 >
 > Este documento descreve o **modelo de dados**, os **fluxos principais** e a **interface web**,
-> alinhados ao **Plano de Ação do grupo** (`PLANO DE AÇÃO GRUPO 4.pdf`).
+> alinhados ao **Plano de Ação** e ao **Relatório Parcial** do grupo.
+>
+> **Decisão do grupo: banco de dados MySQL** (como no Relatório Parcial). A versão PostgreSQL feita antes
+> continua em `database/postgres/` como alternativa, mas **não é a usada**.
 
 ---
 
-## 0. Alinhamento com o Plano de Ação
 
-**Stack definida no plano (Quinzena 4):**
+---
 
-| Camada | Tecnologia do plano | Onde está neste repositório |
+## 0. Stack e andamento
+
+| Camada | Tecnologia | Onde está |
 |---|---|---|
-| Banco relacional | **PostgreSQL** | `database/01_schema.sql`, `02_seed_dev.sql`, `03_testes_regras.sql` |
-| API | **Node.js + Express** (API REST) | a fazer — `backend/` |
-| Interface | **React.js** | a fazer — `frontend/` |
-| Requisitos transversais | Acessibilidade, responsividade (computador e celular), controle de versão (Git), testes | ver seção 5 |
+| Banco relacional | **MySQL 8** (Workbench 8.0.36, como no Relatório Parcial) | `database/mysql/` |
+| API REST | **Node.js + Express** (`mysql2`, JWT, bcrypt) | `backend/` |
+| Interface | **React.js** (Vite), responsiva e acessível | `frontend/` |
 
-> ⚠️ **O `.sql` original (`Sistema-Agendamento (3).sql`) é MySQL**, mas o plano define **PostgreSQL**.
-> Por isso foi feita uma **adaptação para PostgreSQL** em `database/`, mantendo as mesmas tabelas e
-> colunas. O arquivo MySQL foi mantido intacto como referência. As diferenças estão na seção 4.
+> ⚠️ O Plano de Ação (Quinzenas 4–5) cita **PostgreSQL**, enquanto o Relatório Parcial entregue descreve **MySQL**.
+> O grupo decidiu seguir o **MySQL**; vale registrar essa decisão (e o motivo) no Relatório Final e avisar o orientador.
+> Veja `docs/REVISAO_RELATORIO_PARCIAL.md`.
 
-**Em que etapa estamos** (hoje: 29/09/2026):
+**Andamento em relação ao Plano de Ação:**
 
-| Quinzena | Período | Atividade do plano | Situação |
-|---|---|---|---|
-| 3 | 07/09–20/09 | *Iniciar a modelagem do sistema: banco de dados e principais fluxos* (Mayer e Nicolas) | ✅ este documento + `database/` |
-| 4 | 21/09–30/09 | Estrutura inicial do banco **PostgreSQL** (Mayer e Samara) | ✅ schema pronto e testado; falta conectar à API |
-| 4 | 21/09–30/09 | API REST Node/Express (Mayer e Nicolas) | ⏳ próximo passo |
-| 4 | 21/09–30/09 | Protótipo React (Edinaldo e Lucas) | ⏳ em paralelo |
-| 4 | até **30/09** | **Entrega do Relatório Parcial** (Samara) | ⚠️ prazo amanhã — este material serve de insumo |
-| 5 | 05/10–18/10 | Aprimorar serviços, agendamento/disponibilidade, prevenção de conflitos, acessibilidade, testes | — |
-| 6 | 19/10–01/11 | Testes funcionais/integração, acessibilidade, validação com a profissional | — |
-| 7 | 02/11–06/11 | Vídeo e Relatório Final (entrega **06/11**) | — |
-
-**Escopo funcional (do plano):** cadastro de serviços e preços; definição de dias e horários de
-atendimento; consulta de serviços e **auto-agendamento pelo cliente**; **prevenção de conflitos de
-horário**; uso em computador e celular.
+| Quinzena | Atividade do plano | Situação |
+|---|---|---|
+| 3 | Modelagem: banco de dados e principais fluxos | ✅ este documento |
+| 4 | Estrutura inicial do banco e integração | ✅ `database/mysql/` + `backend/` |
+| 4 | API REST Node/Express | ✅ serviços, disponibilidade, agendamento, cancelamento, login, agenda |
+| 4 | Interface React | ✅ fluxo do cliente + login + agenda da profissional |
+| 5 | CRUD de serviços, horários e folgas (painel) | ⏳ API e telas ainda não existem |
+| 5 | Acessibilidade e responsividade | 🟡 base feita (HTML semântico, foco, rótulos, contraste); falta auditoria |
+| 5–6 | Testes e validação com a profissional | 🟡 testes automatizados feitos; falta validar com a profissional |
 
 ---
 
@@ -56,7 +54,7 @@ Atores:
 
 ---
 
-## 2. Modelo de dados (MER) — versão PostgreSQL
+## 2. Modelo de dados (MER)
 
 ```mermaid
 erDiagram
@@ -103,7 +101,7 @@ erDiagram
     HORARIO_DISPONIVEL {
         int id_horario PK
         int id_profissional FK
-        smallint dia_semana "0=Dom ... 6=Sab"
+        enum dia_semana "Segunda..Domingo"
         time hora_inicio
         time hora_fim
     }
@@ -117,7 +115,7 @@ erDiagram
     CLIENTE {
         int id_cliente PK
         varchar nome
-        varchar telefone "obrigatório, único"
+        varchar telefone "obrigatório"
         varchar email "opcional"
         timestamp criado_em
     }
@@ -129,7 +127,7 @@ erDiagram
         date data_agendamento
         time hora_inicio
         time hora_fim
-        decimal preco_cobrado "preço na criação"
+        decimal preco_cobrado "02_melhorias"
         enum status "CONFIRMADO|PENDENTE|CONCLUIDO|CANCELADO"
         text observacao
         varchar motivo_cancelamento
@@ -143,39 +141,35 @@ erDiagram
 | Tabela | Papel | Regras no banco |
 |---|---|---|
 | `profissional` | Quem presta o serviço | `email` único |
-| `usuario` | Login do painel administrativo | `email` único; `perfil` restrito a `ADMIN`/`PROFISSIONAL`; `senha_hash` (bcrypt) |
-| `categoria_servico` | Agrupa serviços (Cabelo, Estética, Manicure e Pedicure) | `nome` único |
-| `servico` | Catálogo com preço e duração | `preco >= 0`, `duracao_minutos > 0`; `ativo` desliga sem apagar |
-| `horario_disponivel` | Grade semanal recorrente de atendimento | `hora_fim > hora_inicio`; **janelas do mesmo dia não podem se sobrepor** |
-| `bloqueio_agenda` | Folgas, feriados, férias (intervalo de datas) | `data_fim >= data_inicio` |
-| `cliente` | Quem agenda | `telefone` obrigatório e **único** (identifica o cliente sem login) |
-| `agendamento` | Reserva de um serviço em data/hora | ver 2.2 |
+| `usuario` | Login do painel | `email` único; `senha_hash` (bcrypt) |
+| `categoria_servico` | Agrupa serviços | `nome` único |
+| `servico` | Catálogo com preço e duração | `preco >= 0`, `duracao_minutos > 0` *(02)*; `ativo` desliga sem apagar |
+| `horario_disponivel` | Grade semanal de atendimento | `hora_fim > hora_inicio` *(02)* |
+| `bloqueio_agenda` *(02)* | Folgas, feriados, férias | `data_fim >= data_inicio` |
+| `cliente` | Quem agenda | `telefone` obrigatório; índice por telefone *(02)* |
+| `agendamento` | Reserva de serviço em data/hora | trigger anti-conflito; `hora_fim > hora_inicio` e `preco_cobrado` *(02)* |
 
-### 2.2 Regras de negócio garantidas pelo banco
+*(02)* = acrescentado por `database/mysql/02_melhorias.sql`; o restante vem do script original (`01_schema_original.sql`).
 
-A regra central — **nunca haver dois agendamentos sobrepostos para a mesma profissional** — era feita
-por *triggers* no MySQL. No PostgreSQL ela virou uma **restrição de exclusão** (`EXCLUDE USING gist`),
-que é declarativa e **segura contra requisições simultâneas** (duas pessoas clicando no mesmo horário
-ao mesmo tempo: só uma passa).
+### 2.2 Regras de negócio
 
-| Regra | Como é garantida |
+**Regra central — sem horários sobrepostos para a mesma profissional.** Implementada por *triggers*
+(`trg_impede_conflito_horario` no INSERT e `..._update` no UPDATE) do script original; ignoram `CANCELADO`
+e permitem horários encostados (10–11 e 11–12). O erro é `SQLSTATE 45000` (errno 1644).
+
+**Limite do trigger:** ele consulta e depois grava; duas requisições simultâneas poderiam passar juntas.
+A API resolve isso: cada reserva roda numa transação `READ COMMITTED` que primeiro trava a linha da
+profissional (`SELECT ... FOR UPDATE`), serializando as reservas. Se mesmo assim o trigger recusar,
+a API devolve **HTTP 409** ("Esse horário acabou de ser ocupado").
+
+| Regra | Onde é garantida |
 |---|---|
-| Sem sobreposição de horários da profissional | `ex_agendamento_sem_conflito` (ignora `CANCELADO`; horários encostados como 10–11 e 11–12 são permitidos) |
-| `hora_fim > hora_inicio` | `CHECK` |
-| Serviço pertence à profissional do agendamento | FK composta `(id_servico, id_profissional)` |
-| Cancelar exige data do cancelamento | `CHECK (status <> 'CANCELADO' OR data_cancelamento IS NOT NULL)` |
-| Histórico protegido | FKs de `agendamento` sem `CASCADE` de exclusão → para "remover" um serviço, use `ativo = FALSE` |
-| Preço histórico | `preco_cobrado` grava o valor na hora do agendamento |
-
-Quando houver conflito, o PostgreSQL devolve o erro **`23P01` (exclusion_violation)**. A API deve
-capturá-lo e responder **HTTP 409** com mensagem amigável ("Esse horário acabou de ser ocupado").
-
-Regras que ficam **na API** (dependem de "agora" e da grade): horário dentro de `horario_disponivel`,
-fora de `bloqueio_agenda`, não estar no passado e antecedência mínima. Estão no fluxo 3.2.
-
-Todas as regras do banco têm teste automatizado em `database/03_testes_regras.sql`.
-
----
+| Sem sobreposição de horários | trigger (banco) + trava na API |
+| `hora_fim > hora_inicio`, preço e duração válidos | `CHECK` (MySQL 8.0.16+) |
+| Horário dentro do expediente, fora de folgas, não no passado, antecedência mínima | **API** (`backend/src/disponibilidade.js`) |
+| Cliente identificado pelo telefone (só dígitos) | **API** |
+| Preço histórico | `preco_cobrado` preenchido pela API |
+| Histórico protegido | FKs de `agendamento` sem `CASCADE`; para "remover" serviço, `ativo = FALSE` |
 
 ## 3. Fluxos principais
 
@@ -193,7 +187,7 @@ flowchart TD
     G --> H[Informa nome, telefone e e-mail opcional]
     H --> I[Localiza cliente por telefone<br/>ou cria novo]
     I --> J[INSERT em agendamento<br/>hora_fim = hora_inicio + duracao_minutos<br/>preco_cobrado = servico.preco]
-    J --> K{Banco rejeitou por conflito<br/>erro 23P01?}
+    J --> K{Trigger do banco recusou<br/>por conflito?}
     K -- Sim --> L[Informa que o horário acabou de ser ocupado]
     L --> E
     K -- Não --> M([Confirmação na tela + WhatsApp/e-mail])
@@ -203,7 +197,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[Data escolhida] --> B[Converte para dia_semana<br/>0=Dom ... 6=Sab, igual a Date.getDay]
+    A[Data escolhida] --> B[Converte a data em dia da semana]
     B --> C[Busca janelas em horario_disponivel]
     C --> C2[Descarta o dia se houver<br/>bloqueio_agenda]
     C2 --> D[Busca agendamentos do dia<br/>status diferente de CANCELADO]
@@ -214,32 +208,26 @@ flowchart LR
     H --> I[Lista de horários livres]
 ```
 
-Consultas de apoio (PostgreSQL; `:x` = parâmetro da API, usar sempre consultas parametrizadas):
+Consultas de apoio (MySQL; `?` = parâmetro, a API usa sempre consultas parametrizadas):
 
 ```sql
 -- Dia bloqueado? (se retornar linha, não há horários)
-SELECT 1 FROM bloqueio_agenda
-WHERE id_profissional = :prof AND :data BETWEEN data_inicio AND data_fim;
+SELECT motivo FROM bloqueio_agenda
+WHERE id_profissional = ? AND ? BETWEEN data_inicio AND data_fim;
 
--- Janelas do dia (dia_semana: 0=Dom ... 6=Sáb; no SQL: EXTRACT(DOW FROM :data::date))
-SELECT hora_inicio, hora_fim
+-- Janelas do dia (a API converte a data em 'Segunda', 'Terca', ... — ENUM do banco)
+SELECT TIME_FORMAT(hora_inicio,'%H:%i') AS hora_inicio, TIME_FORMAT(hora_fim,'%H:%i') AS hora_fim
 FROM horario_disponivel
-WHERE id_profissional = :prof
-  AND dia_semana = EXTRACT(DOW FROM :data::date)
-ORDER BY hora_inicio;
+WHERE id_profissional = ? AND dia_semana = ?;
 
 -- Ocupação do dia
-SELECT hora_inicio, hora_fim
+SELECT TIME_FORMAT(hora_inicio,'%H:%i') AS hora_inicio, TIME_FORMAT(hora_fim,'%H:%i') AS hora_fim
 FROM agendamento
-WHERE id_profissional = :prof
-  AND data_agendamento = :data
-  AND status <> 'CANCELADO'
-ORDER BY hora_inicio;
+WHERE id_profissional = ? AND data_agendamento = ? AND status <> 'CANCELADO';
 ```
 
-O cálculo dos *slots* (passo de 15/30 min, cabe na janela, não sobrepõe) fica em **JavaScript no
-back-end**, onde é fácil de testar. Mesmo que a tela mostre um horário já ocupado por outra pessoa,
-o banco garante que o segundo `INSERT` seja recusado.
+O cálculo dos *slots* (passo de 30 min, cabe na janela, não sobrepõe) é feito em **JavaScript no
+back-end** (`backend/src/slots.js`), com testes automatizados.
 
 ### 3.3 Ciclo de vida do agendamento
 
@@ -255,8 +243,8 @@ stateDiagram-v2
     CANCELADO --> [*]
 ```
 
-- Cancelar = `UPDATE agendamento SET status='CANCELADO', motivo_cancelamento=$1, data_cancelamento=now()`.
-  O horário volta a ficar livre automaticamente (a restrição de exclusão ignora cancelados).
+- Cancelar = `UPDATE agendamento SET status='CANCELADO', motivo_cancelamento=?, data_cancelamento=NOW()`.
+  O horário volta a ficar livre automaticamente (o trigger ignora cancelados).
 - **Nunca apagar** agendamentos: o histórico alimenta relatórios.
 
 ### 3.4 Fluxo administrativo
@@ -292,39 +280,27 @@ ORDER BY a.hora_inicio;
 
 ---
 
-## 4. Do MySQL (original) para o PostgreSQL (plano) — o que mudou
+## 4. Banco de dados: como montar
 
-O script MySQL original foi revisado; os pontos encontrados e como ficaram em `database/01_schema.sql`:
+Os scripts estão em `database/mysql/` (detalhes e passo a passo em `database/mysql/README.md`):
 
-| # | Ponto do script original | Situação no PostgreSQL |
-|---|---|---|
-| 1 | Trigger sem proteção contra requisições simultâneas | ✅ Resolvido: `EXCLUDE USING gist` (exige `btree_gist`) |
-| 2 | Sem validação `hora_fim > hora_inicio` | ✅ `CHECK` em `agendamento` e `horario_disponivel` |
-| 3 | Serviço de uma profissional podia ser agendado com outra | ✅ FK composta |
-| 4 | Sem preço histórico no agendamento | ✅ coluna `preco_cobrado` |
-| 5 | `usuario.perfil` livre | ✅ `CHECK` (`ADMIN`, `PROFISSIONAL`) |
-| 6 | `cliente.telefone` duplicável | ✅ `UNIQUE` (API normaliza para só dígitos) |
-| 7 | Janelas de atendimento duplicadas/sobrepostas | ✅ `EXCLUDE` em `horario_disponivel` |
-| 8 | Sem folgas/feriados | ✅ nova tabela `bloqueio_agenda` |
-| 9 | `senha_hash` de exemplo inválido | ✅ seed com bcrypt real (login de teste `admin@mariana.com` / `admin123`, **só dev**) |
-| 10 | `DROP DATABASE` no início | ✅ removido; o schema é aplicado em banco vazio |
-| 11 | Agendamento fora do expediente não é barrado | ➡️ fica na API (regra depende da grade e da data) |
+1. `01_schema_original.sql` — o banco do Relatório Parcial (7 tabelas, triggers, dados de teste);
+2. `02_melhorias.sql` — `preco_cobrado`, `CHECK`s, índice por telefone e `bloqueio_agenda`;
+3. `03_dev_admin.sql` — senha de teste do painel (**só desenvolvimento**).
 
-Conversões de sintaxe: `AUTO_INCREMENT` → `GENERATED ALWAYS AS IDENTITY`; `TIMESTAMP` → `TIMESTAMPTZ`;
-`BOOLEAN`/`DECIMAL` → `BOOLEAN`/`NUMERIC`; `ENUM` de status → `CREATE TYPE`; `dia_semana` de `ENUM`
-com texto para `SMALLINT` 0–6 (mesmo padrão do `Date.getDay()` do JavaScript, sem depender de acento
-ou idioma); triggers → restrições declarativas.
+Melhorias já aplicadas pelo `02` e pontos que ficam na API:
 
-### Como rodar e testar
-
-```bash
-createdb sistema_agendamento
-psql -d sistema_agendamento -f database/01_schema.sql
-psql -d sistema_agendamento -f database/02_seed_dev.sql
-psql -v ON_ERROR_STOP=1 -d sistema_agendamento -f database/03_testes_regras.sql   # 16 verificações, termina em ROLLBACK
-```
-
-Os três scripts foram executados em um PostgreSQL real e as 16 verificações passaram.
+| Ponto identificado no script original | Situação |
+|---|---|
+| Sem validação `hora_fim > hora_inicio` | ✅ `CHECK` |
+| Sem preço histórico no agendamento | ✅ `preco_cobrado` |
+| Sem folgas/feriados | ✅ tabela `bloqueio_agenda` |
+| `senha_hash` de exemplo inválido | ✅ `03_dev_admin.sql` (bcrypt real, só dev) |
+| Trigger sem proteção contra requisições simultâneas | ✅ transação + `FOR UPDATE` na API |
+| Agendar fora do expediente / no passado | ✅ API |
+| `cliente.telefone` duplicável | ➡️ API reaproveita o cliente pelo telefone (só dígitos) |
+| Serviço de uma profissional agendado com outra | ➡️ a API usa a profissional do próprio serviço |
+| `DROP DATABASE` no início do `01` | ⚠️ apaga tudo se reexecutado — só em desenvolvimento |
 
 ---
 
@@ -350,19 +326,21 @@ Não exige login (o cliente é identificado pelo telefone).
 | Clientes | Cadastro, histórico, contato por WhatsApp | — |
 | Relatórios *(fase posterior)* | Faturamento, serviços mais pedidos, cancelamentos | — |
 
+**Já implementado:** Login e Agenda do dia (navegar entre dias, confirmar, concluir e cancelar com motivo, link de WhatsApp). As demais telas ficam para a Quinzena 5.
+
 ### Formato escolhido: SPA em React + API REST
-- **Front-end:** React.js (SPA responsiva). Sugestão: Vite + React Router; CSS mobile-first (Bootstrap ou Tailwind).
-- **Back-end:** Node.js + Express, API REST em JSON, biblioteca `pg` (consultas parametrizadas).
-- **Banco:** PostgreSQL (pasta `database/`).
-- **Segurança:** `bcrypt` para senha, JWT (ou sessão) no painel admin, `helmet` e CORS configurado.
-- **Nuvem (tema norteador):** front em hospedagem estática, API + PostgreSQL em serviço gerenciado (ex.: Render/Railway/Neon).
-- Evolução opcional: transformar em **PWA** para a profissional "instalar" no celular.
+- **Front-end:** React 18 + Vite + React Router; CSS próprio, mobile-first (`frontend/`).
+- **Back-end:** Node.js + Express, API REST em JSON, `mysql2` com consultas parametrizadas (`backend/`).
+- **Banco:** MySQL 8 (`database/mysql/`).
+- **Segurança:** bcrypt para senhas, JWT de 8 h no painel, `helmet`, CORS configurável e limite de tentativas de login.
+- **Nuvem (tema norteador):** front em hospedagem estática; API e MySQL em serviço que ofereça **MySQL de verdade** (triggers são a regra central).
+- Evolução opcional: PWA.
 
 ### Acessibilidade e responsividade (requisitos do plano, Quinzenas 5 e 6)
 HTML semântico, rótulos em todos os campos, navegação por teclado, contraste mínimo WCAG AA,
 botões grandes para toque, mensagens de erro claras e layout fluido de 360 px a desktop.
 
-### Endpoints da API (rascunho)
+### Endpoints da API (implementados — ver `backend/README.md`)
 ```
 GET    /api/servicos                          # público – serviços ativos
 GET    /api/disponibilidade?servico=&data=    # público – horários livres
@@ -370,40 +348,33 @@ POST   /api/agendamentos                      # público – cria (409 se houver
 POST   /api/agendamentos/:id/cancelar         # público/admin – cancela com motivo
 
 POST   /api/auth/login                        # admin
-GET    /api/admin/agenda?inicio=&fim=         # admin (usa vw_agenda)
+GET    /api/admin/agenda?inicio=&fim=         # admin
 PATCH  /api/admin/agendamentos/:id            # admin – status/remarcar
-CRUD   /api/admin/servicos | categorias | clientes | horarios | bloqueios
-GET    /api/admin/relatorios/...              # admin (fase posterior)
+# a fazer (Quinzena 5): CRUD /api/admin/servicos | categorias | horarios | bloqueios | clientes
 ```
 
-### Estrutura de pastas sugerida
+### Estrutura de pastas
 ```
 BD2/
-├── database/    # schema, seed e testes (PostgreSQL)   ← pronto
-├── backend/     # Node + Express                        ← Quinzena 4 (Mayer e Nicolas)
-├── frontend/    # React                                 ← Quinzena 4 (Edinaldo e Lucas)
-└── docs/        # modelagem e material do relatório
+├── database/mysql/     # scripts 01, 02 e 03 (MySQL)             ✅
+├── database/postgres/  # versão alternativa, não usada           —
+├── backend/            # Node + Express (npm run dev / npm test) ✅
+├── frontend/           # React + Vite   (npm run dev / npm test) ✅
+├── docker-compose.yml  # MySQL local opcional
+└── docs/               # modelagem e revisão do relatório
 ```
 
 ---
 
-## 6. Próximos passos (seguindo o plano)
+## 6. Próximos passos (Quinzena 5: 05/10–18/10)
 
-**Até 30/09 (Quinzena 4 – Relatório Parcial):**
-1. Mayer e Samara: conferir o schema PostgreSQL e subir o banco em nuvem para integração.
-2. Mayer e Nicolas: criar `backend/` com Express + `pg`; primeiros endpoints `GET /api/servicos`, `GET /api/disponibilidade`, `POST /api/agendamentos`.
-3. Edinaldo e Lucas: criar `frontend/` com as telas A (fluxo do cliente) e a agenda do painel.
-4. Amanda e Marcela: apresentar o protótipo à profissional e registrar sugestões.
-5. Samara: usar as seções 0–3 deste documento (MER, fluxos, regras) no **Relatório Parcial**.
-
-**Quinzena 5 (05/10–18/10):** cálculo de disponibilidade com bloqueios, cancelamento/remarcação,
-CRUD completo de serviços e horários, login do admin, acessibilidade e responsividade.
-
-**Quinzena 6 (19/10–01/11):** testes funcionais (cadastro, consulta, agendamento), de integração
-(React ↔ API ↔ PostgreSQL), de acessibilidade/usabilidade e validação final com a profissional.
+1. **Painel:** telas e endpoints de CRUD de serviços/categorias, horários de atendimento e folgas (Edinaldo e Lucas).
+2. **Agendamento/disponibilidade e conflitos:** validar com a profissional o passo (15/30 min), a antecedência mínima e a regra de cancelamento (Amanda e Marcela).
+3. **Integração e nuvem:** publicar API + MySQL + front (Mayer e Samara).
+4. **Acessibilidade e responsividade:** auditoria com leitor de tela, teclado e celular real (Mayer e Nicolas).
+5. **Lembretes por WhatsApp** (melhoria apontada no Relatório Parcial): hoje há apenas o link `wa.me` no painel.
 
 **Decisões em aberto para o grupo:**
-- O cliente agenda já como `CONFIRMADO` ou entra como `PENDENTE` até a profissional aprovar?
-- Existe antecedência mínima e prazo limite para o cliente cancelar?
-- Haverá aviso por WhatsApp/e-mail na primeira versão?
-- Intervalo entre atendimentos (limpeza/preparo) e "passo" dos horários (15 ou 30 min)?
+- O cliente agenda já como `CONFIRMADO` ou entra como `PENDENTE` até a profissional aprovar? (`STATUS_INICIAL` no `.env`)
+- Prazo mínimo para o cliente cancelar?
+- O objetivo do relatório cita **"pagamentos"**: haverá controle de pagamento ou será retirado do texto?

@@ -1,4 +1,7 @@
-# Banco de dados (PostgreSQL)
+# Banco de dados (PostgreSQL) — ALTERNATIVA, NÃO USADA NO MOMENTO
+
+> O grupo decidiu seguir com **MySQL** (`../mysql/`), como no Relatório Parcial. Estes scripts ficam guardados
+> caso o grupo opte por PostgreSQL/Supabase, conforme o Plano de Ação. A API atual fala só com MySQL.
 
 | Arquivo | Conteúdo |
 |---|---|
@@ -9,13 +12,12 @@
 
 ```bash
 createdb sistema_agendamento
-psql -d sistema_agendamento -f database/01_schema.sql
-psql -d sistema_agendamento -f database/02_seed_dev.sql
-psql -v ON_ERROR_STOP=1 -d sistema_agendamento -f database/03_testes_regras.sql
+psql -d sistema_agendamento -f database/postgres/01_schema.sql
+psql -d sistema_agendamento -f database/postgres/02_seed_dev.sql
+psql -v ON_ERROR_STOP=1 -d sistema_agendamento -f database/postgres/03_testes_regras.sql
 ```
 
 Requer PostgreSQL 13+. A extensão `btree_gist` é criada pelo próprio `01_schema.sql`
 (em serviços gerenciados como Neon, Supabase e Render ela já é liberada).
 
-O arquivo MySQL original (`Sistema-Agendamento (3).sql`, na raiz) foi mantido só como referência.
-Detalhes e racional: [`docs/MODELAGEM.md`](../docs/MODELAGEM.md).
+Detalhes e racional: [`docs/MODELAGEM.md`](../../docs/MODELAGEM.md).

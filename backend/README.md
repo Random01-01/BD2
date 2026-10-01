@@ -6,16 +6,16 @@
 cd backend
 npm install
 cp .env.example .env        # Windows (PowerShell): copy .env.example .env
-# edite o .env: DATABASE_URL (Supabase) e JWT_SECRET
+# edite o .env: DATABASE_URL (MySQL) e JWT_SECRET
 npm run dev                 # API em http://localhost:3001/api/saude
-npm test                    # testes unitários (não precisam de banco)
+npm run demo                # sem banco: dados fictícios em memória
+npm test                    # testes (não precisam de banco)
 ```
 
 > **Nunca** faça commit do `.env` (ele já está no `.gitignore`). O repositório é público e a
 > `DATABASE_URL` contém a senha do banco.
 
-Pré-requisitos: Node 18.11+ e o banco criado com `database/01_schema.sql`, `02_seed_dev.sql`
-e (no Supabase) `04_supabase_seguranca.sql`.
+Pré-requisitos: Node 18.11+ e o banco criado com `database/mysql/` (scripts 01, 02 e 03 — ver o README de lá).
 
 ## Endpoints
 
@@ -51,14 +51,15 @@ Transições permitidas: `PENDENTE → CONFIRMADO/CANCELADO`, `CONFIRMADO → CO
 ## Regras implementadas
 - Horários calculados a partir de `horario_disponivel`, descontando `bloqueio_agenda` e agendamentos não cancelados; nunca no passado e respeitando a antecedência mínima (hoje).
 - Cliente identificado pelo telefone (somente dígitos); o mesmo telefone reaproveita o cadastro.
-- Conflitos: a API confere a disponibilidade e o **banco garante** (erro `23P01` → HTTP 409), inclusive com requisições simultâneas.
+- Conflitos: a API confere a disponibilidade e o **trigger do banco** é a palavra final (erro 1644 → HTTP 409). Cada reserva roda em transação `READ COMMITTED` com `SELECT ... FOR UPDATE` na profissional, para que reservas simultâneas não passem juntas.
 - `preco_cobrado` grava o preço vigente na criação.
 - Login com bcrypt + JWT (8 h) e limite de tentativas.
 
 ## Configurações (`.env`)
 `STATUS_INICIAL` (`CONFIRMADO`/`PENDENTE`), `PASSO_MINUTOS`, `ANTECEDENCIA_MINUTOS`, `CORS_ORIGIN`, `PORT`.
 
-## Verificação
-Além dos testes unitários (`npm test`), a API foi exercitada de ponta a ponta contra um PostgreSQL
-real (22 verificações: disponibilidade, criação, conflitos, 5 requisições simultâneas no mesmo
-horário, cancelamento, login, agenda e mudança de status).
+## Arquitetura e verificação
+- `src/repos/mysql.js`: **toda** a SQL do sistema (MySQL). `src/repos/memoria.js`: mesma interface, em memória (testes e modo demo).
+- Regras (`src/disponibilidade.js`, `src/slots.js`, rotas) não dependem do banco.
+- `npm test`: 19 testes — cálculo de horários e a API via HTTP (disponibilidade, criação, conflitos, 5 requisições simultâneas, cancelamento, login, agenda, mudança de status).
+- ⚠️ **A camada `repos/mysql.js` ainda não foi executada contra um MySQL real** (o ambiente de desenvolvimento não tinha MySQL). Primeiro passo no seu computador: rodar os scripts do banco, `npm run dev` e testar `/api/servicos`, `/api/disponibilidade` e um agendamento. Se aparecer erro de SQL, envie a mensagem (sem a senha).

@@ -11,7 +11,7 @@ const TRANSICOES = {
   CANCELADO: [],
 };
 
-export function rotasAdmin(pool, config) {
+export function rotasAdmin(repo, config) {
   const r = Router();
 
   const limiteLogin = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false });
@@ -19,11 +19,7 @@ export function rotasAdmin(pool, config) {
   r.post('/auth/login', limiteLogin, async (req, res) => {
     const email = String(req.body?.email ?? '').trim().toLowerCase();
     const senha = String(req.body?.senha ?? '');
-    const { rows } = await pool.query(
-      'SELECT id_usuario, id_profissional, nome, email, senha_hash, perfil FROM usuario WHERE lower(email) = $1',
-      [email],
-    );
-    const u = rows[0];
+    const u = await repo.buscarUsuarioPorEmail(email);
     const ok = u && (await bcrypt.compare(senha, u.senha_hash));
     if (!ok) return res.status(401).json({ erro: 'E-mail ou senha incorretos.' });
     res.json({ token: assinarToken(u, config.jwtSecret), usuario: { nome: u.nome, email: u.email, perfil: u.perfil } });
@@ -36,15 +32,7 @@ export function rotasAdmin(pool, config) {
   protegido.get('/agenda', async (req, res) => {
     const { inicio, fim = inicio } = req.query;
     if (!dataValida(inicio) || !dataValida(fim)) return res.status(400).json({ erro: 'Informe "inicio" e "fim" (AAAA-MM-DD).' });
-    const { rows } = await pool.query(
-      `SELECT id_agendamento, data_agendamento, to_char(hora_inicio,'HH24:MI') AS hora_inicio,
-              to_char(hora_fim,'HH24:MI') AS hora_fim, status, observacao,
-              id_cliente, cliente, telefone_cliente, id_servico, servico, preco
-         FROM vw_agenda
-        WHERE id_profissional = $1 AND data_agendamento BETWEEN $2 AND $3
-        ORDER BY data_agendamento, hora_inicio`,
-      [req.usuario.id_profissional, inicio, fim],
-    );
+    const rows = await repo.agendaDoPeriodo(req.usuario.id_profissional, inicio, fim);
     res.json(rows);
   });
 
@@ -55,22 +43,13 @@ export function rotasAdmin(pool, config) {
     if (!Number.isInteger(id) || !Object.keys(TRANSICOES).includes(novo)) {
       return res.status(400).json({ erro: 'Informe um status válido.' });
     }
-    const atual = await pool.query(
-      'SELECT status FROM agendamento WHERE id_agendamento = $1 AND id_profissional = $2',
-      [id, req.usuario.id_profissional],
-    );
-    if (!atual.rowCount) return res.status(404).json({ erro: 'Agendamento não encontrado.' });
-    if (!TRANSICOES[atual.rows[0].status].includes(novo)) {
-      return res.status(409).json({ erro: `Não é possível mudar de ${atual.rows[0].status} para ${novo}.` });
+    const atual = await repo.statusDoAgendamento(id, req.usuario.id_profissional);
+    if (!atual) return res.status(404).json({ erro: 'Agendamento não encontrado.' });
+    if (!TRANSICOES[atual].includes(novo)) {
+      return res.status(409).json({ erro: `Não é possível mudar de ${atual} para ${novo}.` });
     }
     const motivo = novo === 'CANCELADO' ? String(req.body?.motivo_cancelamento ?? 'Cancelado pela profissional').slice(0, 255) : null;
-    await pool.query(
-      `UPDATE agendamento SET status = $2::status_agendamento,
-              motivo_cancelamento = $3,
-              data_cancelamento = CASE WHEN $2::text = 'CANCELADO' THEN now() END
-        WHERE id_agendamento = $1`,
-      [id, novo, motivo],
-    );
+    await repo.atualizarStatus({ id, status: novo, motivo });
     res.json({ ok: true });
   });
 

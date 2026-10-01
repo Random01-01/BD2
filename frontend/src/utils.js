@@ -1,0 +1,45 @@
+const FUSO = 'America/Sao_Paulo';
+
+/** Data de hoje em São Paulo: "AAAA-MM-DD" */
+export function hojeSP() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+export function somarDias(data, dias) {
+  const d = new Date(`${data}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+/** "2026-10-06" -> "terça-feira, 06/10/2026" */
+export function dataExtenso(data) {
+  const d = new Date(`${data}T12:00:00Z`);
+  const dia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', weekday: 'long' }).format(d);
+  return `${dia}, ${data.split('-').reverse().join('/')}`;
+}
+
+export const dataCurta = (data) => data.split('-').reverse().join('/');
+
+export const moeda = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+export function duracao(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
+}
+
+/** Máscara de telefone brasileiro: (18) 99999-9999 */
+export function mascararTelefone(valor) {
+  const n = valor.replace(/\D/g, '').slice(0, 11);
+  if (n.length <= 2) return n ? `(${n}` : '';
+  if (n.length <= 6) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
+  if (n.length <= 10) return `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`;
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
+}
+
+export const soDigitos = (t) => String(t ?? '').replace(/\D/g, '');
+
+export const linkWhatsApp = (telefone) => {
+  const n = soDigitos(telefone);
+  return `https://wa.me/${n.startsWith('55') ? n : `55${n}`}`;
+};

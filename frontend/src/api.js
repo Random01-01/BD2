@@ -1,0 +1,33 @@
+// Cliente da API. Em desenvolvimento o Vite repassa /api para o backend.
+async function req(caminho, { method = 'GET', corpo, token } = {}) {
+  let resposta;
+  try {
+    resposta = await fetch(`/api${caminho}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: corpo ? JSON.stringify(corpo) : undefined,
+    });
+  } catch {
+    throw new Error('Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.');
+  }
+  let dados = null;
+  try { dados = await resposta.json(); } catch { /* corpo vazio */ }
+  if (!resposta.ok) {
+    const e = new Error(dados?.erro || 'Ocorreu um erro. Tente novamente.');
+    e.status = resposta.status;
+    e.detalhes = dados?.detalhes;
+    throw e;
+  }
+  return dados;
+}
+
+export const api = {
+  servicos: () => req('/servicos'),
+  disponibilidade: (servico, data) => req(`/disponibilidade?servico=${servico}&data=${data}`),
+  agendar: (corpo) => req('/agendamentos', { method: 'POST', corpo }),
+  cancelar: (id, telefone, motivo) => req(`/agendamentos/${id}/cancelar`, { method: 'POST', corpo: { telefone, motivo } }),
+  login: (email, senha) => req('/auth/login', { method: 'POST', corpo: { email, senha } }),
+  agenda: (token, inicio, fim) => req(`/admin/agenda?inicio=${inicio}&fim=${fim}`, { token }),
+  mudarStatus: (token, id, status, motivo) =>
+    req(`/admin/agendamentos/${id}`, { method: 'PATCH', corpo: { status, motivo_cancelamento: motivo }, token }),
+};

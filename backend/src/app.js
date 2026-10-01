@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { ConflitoError } from './erros.js';
 import { rotasAdmin } from './routes/admin.js';
 import { rotasPublicas } from './routes/publico.js';
 
@@ -17,7 +18,7 @@ const comCaptura = (router) => {
   return router;
 };
 
-export function criarApp(pool, config) {
+export function criarApp(repo, config) {
   if (!config.jwtSecret || config.jwtSecret.length < 16) {
     throw new Error('JWT_SECRET não definido (mínimo 16 caracteres). Veja backend/.env.example.');
   }
@@ -28,16 +29,17 @@ export function criarApp(pool, config) {
   app.use(express.json({ limit: '50kb' }));
 
   app.get('/api/saude', async (_req, res) => {
-    await pool.query('SELECT 1');
+    await repo.ping();
     res.json({ ok: true });
   });
 
-  app.use('/api', comCaptura(rotasPublicas(pool, config)));
-  app.use('/api', comCaptura(rotasAdmin(pool, config)));
+  app.use('/api', comCaptura(rotasPublicas(repo, config)));
+  app.use('/api', comCaptura(rotasAdmin(repo, config)));
 
   app.use('/api', (_req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
   // eslint-disable-next-line no-unused-vars
   app.use((err, _req, res, _next) => {
+    if (err instanceof ConflitoError) return res.status(409).json({ erro: err.message });
     console.error(err);
     res.status(500).json({ erro: 'Erro interno. Tente novamente.' });
   });
