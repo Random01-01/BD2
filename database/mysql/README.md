@@ -6,6 +6,8 @@
 | 2 | `02_melhorias.sql` | `preco_cobrado`, validações `CHECK`, índice por telefone e tabela `bloqueio_agenda` |
 | 3 | `03_dev_admin.sql` | **Só desenvolvimento.** Senha de teste do painel: `admin@mariana.com` / `admin123` |
 
+> `01_schema_original.sql` é idêntico ao arquivo `Sistema-Agendamento (3).sql` da raiz do repositório (mantido lá por ser o arquivo entregue). Se alterar um, altere o outro.
+
 ## Opção A — MySQL Workbench (como no relatório)
 Abra e execute (⚡) cada arquivo, **na ordem 1 → 2 → 3**, conectado em `localhost:3306`.
 Rode o `02` apenas uma vez; se rodar de novo dá erro de "coluna/constraint já existe" (é esperado — para recomeçar, rode o `01` novamente, que recria tudo).
