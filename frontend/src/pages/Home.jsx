@@ -31,6 +31,7 @@ export default function Home() {
               <a className="btn btn--primario btn--grande" href="#servicos">Agendar horário</a>
               <a className="btn btn--grande" href="#como-funciona">Como funciona</a>
             </div>
+            <p className="hero__selo"><span aria-hidden="true">✦</span> <strong>Agende online</strong> <span className="muted">· sem ligar, sem espera</span></p>
           </div>
           <div className="hero__arte" aria-hidden="true">
             {marca.imagemHero
@@ -38,7 +39,6 @@ export default function Home() {
                 <>
                   <span className="hero__moldura" />
                   <img src={marca.imagemHero} alt="" className="hero__foto" />
-                  <span className="hero__selo">✦ Agende online<br /><small>sem ligar, sem espera</small></span>
                 </>
               )
               : (
@@ -73,7 +73,7 @@ export default function Home() {
             {visiveis.map((s) => (
               <li key={s.id_servico} className={`servico servico--${tomDe(s)}`}>
                 <div className="servico__img">
-                  <img src={marca.imagensCategoria?.[s.categoria] ?? marca.imagemPadrao} alt="" loading="lazy" />
+                  <img src={marca.imagensServico?.[s.nome] ?? marca.imagensCategoria?.[s.categoria] ?? marca.imagemPadrao} alt="" loading="lazy" />
                 </div>
                 <div className="servico__corpo">
                   <p className="servico__cat">{s.categoria || 'Outros'}</p>

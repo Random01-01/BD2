@@ -277,9 +277,7 @@ h1, h2 { font-family: var(--fonte-titulo); }
 .hero__arte { position: relative; width: 100%; max-width: 400px; margin-inline: auto; aspect-ratio: 4 / 5; display: grid; place-items: center; }
 .hero__moldura { position: absolute; inset: 6% -6% -5% 8%; border-radius: 999px 999px 28px 28px; background: linear-gradient(160deg, var(--tom-lilas), var(--tom-areia)); border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, transparent); }
 .hero__foto { position: relative; width: 100%; height: 100%; object-fit: cover; object-position: 35% 40%; border-radius: 999px 999px 28px 28px; box-shadow: 0 30px 60px -20px rgba(79, 38, 70, .45); }
-.hero__selo { position: absolute; left: -8%; bottom: 8%; background: rgba(255, 255, 255, .92); backdrop-filter: blur(6px); border-radius: 16px; padding: .7rem 1rem; font-weight: 700; color: var(--cor-primaria-escura); box-shadow: 0 12px 28px rgba(34, 28, 32, .14); line-height: 1.25; }
-.hero__selo small { font-weight: 500; color: var(--cor-suave); }
-@media (max-width: 760px) { .hero__arte { max-width: 260px; } .hero__selo { left: -4%; } }
+@media (max-width: 760px) { .hero__arte { max-width: 260px; } }
 
 .faixa:not(.faixa--escura):not(.faixa--areia) { background: linear-gradient(180deg, var(--cor-fundo), color-mix(in srgb, var(--tom-lilas) 45%, var(--cor-fundo))); }
 .faixa--escura { color: #fff; position: relative; isolation: isolate;
@@ -297,3 +295,6 @@ h1, h2 { font-family: var(--fonte-titulo); }
 
 /* Cartões das demais páginas sobre o fundo em camadas */
 .cartao { background: rgba(255, 255, 255, .94); }
+
+/* Selo "Agende online", abaixo dos botões da home */
+.hero__selo { display: inline-flex; align-items: center; flex-wrap: wrap; gap: .35rem; margin: 1.75rem 0 0; padding: .6rem 1.1rem; border-radius: 999px; background: rgba(255, 255, 255, .75); backdrop-filter: blur(6px); border: 1px solid color-mix(in srgb, var(--cor-primaria) 18%, transparent); color: var(--cor-primaria-escura); box-shadow: 0 6px 18px rgba(34, 28, 32, .06); }

@@ -28,6 +28,13 @@ export const marca = {
   // troque por fotos reais do salão (mesmos nomes de arquivo ou novos caminhos aqui).
   // Sem foto (null), a home usa uma composição de formas coloridas.
   imagemHero: '/img/hero.jpg',
+  // Foto de um serviço específico (a chave é o nome do serviço, igual ao cadastrado no painel).
+  // Serviço sem foto própria usa a da categoria dele.
+  imagensServico: {
+    'Coloração': '/img/coloracao.jpg',
+    'Corte feminino': '/img/corte.jpg',
+    'Escova': '/img/escova.jpg',
+  },
   // Foto de cada categoria de serviço (a chave é o nome da categoria cadastrada no painel).
   imagensCategoria: {
     'Cabelo': '/img/cabelo.jpg',
