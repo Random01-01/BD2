@@ -237,6 +237,7 @@ Conforme o Plano de Ação.
 
 ## 12. Documentação
 - [`docs/MODELAGEM.md`](docs/MODELAGEM.md) — modelo de dados, fluxos e telas
+- [`docs/PROXIMAS_ETAPAS.md`](docs/PROXIMAS_ETAPAS.md) — roteiro de testes no MySQL, etapas até 06/11 e instruções para o grupo
 - [`docs/REVISAO_RELATORIO_PARCIAL.md`](docs/REVISAO_RELATORIO_PARCIAL.md) — o que ajustar no relatório
 - [`database/mysql/README.md`](database/mysql/README.md) — montar o banco
 - [`backend/README.md`](backend/README.md) — API em detalhe
