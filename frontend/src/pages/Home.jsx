@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { Desenho, FundoDesenhos } from '../desenhos.jsx';
 import { marca } from '../marca.js';
 import { duracao, moeda } from '../utils.js';
 
-const TONS = ['rosa', 'verde', 'lilas', 'areia'];
+const TONS = ['rosa', 'verde', 'azul', 'areia'];
 
 export default function Home() {
   const navegar = useNavigate();
@@ -22,6 +23,7 @@ export default function Home() {
   return (
     <>
       <section className="hero" aria-labelledby="t-hero">
+      <FundoDesenhos variante="hero" itens={['tesoura', 'secador', 'espelho', 'pente', 'esmalte', 'brilho', 'brilho']} />
         <div className="faixa__interno hero__grade">
           <div>
             <p className="hero__eyebrow">{marca.nome} · {marca.slogan}</p>
@@ -44,7 +46,7 @@ export default function Home() {
               : (
                 <>
                   <span className="forma forma--rosa" /><span className="forma forma--verde" />
-                  <span className="forma forma--lilas" /><span className="forma forma--areia" />
+                  <span className="forma forma--azul" /><span className="forma forma--areia" />
                   <span className="hero__letra">{marca.nome.charAt(0)}</span>
                 </>
               )}
@@ -90,12 +92,15 @@ export default function Home() {
       </section>
 
       <section id="como-funciona" className="faixa faixa--escura" aria-labelledby="t-como" tabIndex={-1}>
+        <FundoDesenhos variante="escuro" itens={['escova', 'tesoura', 'secador', 'esmalte', 'brilho', 'brilho']} />
         <div className="faixa__interno">
+          <p className="faixa__sobre">Simples assim</p>
           <h2 id="t-como" className="faixa__titulo">Como funciona</h2>
           <ol className="passos">
             {marca.passos.map((p, i) => (
               <li key={p.titulo} className="passo">
-                <span className="passo__num" aria-hidden="true">{i + 1}</span>
+                <span className="passo__numero" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <span className="passo__icone"><Desenho nome={p.icone ?? 'brilho'} /></span>
                 <h3>{p.titulo}</h3>
                 <p className="muted">{p.texto}</p>
               </li>
@@ -105,6 +110,7 @@ export default function Home() {
       </section>
 
       <section id="contato" className="faixa faixa--areia" aria-labelledby="t-contato" tabIndex={-1}>
+        <FundoDesenhos variante="claro" itens={['espelho', 'pente', 'brilho']} />
         <div className="faixa__interno">
           <h2 id="t-contato" className="faixa__titulo">Onde e quando</h2>
           <dl className="contato">

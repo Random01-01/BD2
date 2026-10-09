@@ -13,15 +13,16 @@ export const marca = {
   cores: {
     primaria: '#6b3a5e',
     primariaEscura: '#4f2646',
-    fundo: '#fcfaf7',
+    fundo: '#edf3fa',
     texto: '#221c20',
     suave: '#62585f',
-    borda: '#e6dde2',
-    // tons suaves usados nos cartões e na home
+    borda: '#d6e0ec',
+    // tons suaves usados nos cartões e na home (paleta: azul suave + rosa quartzo + ameixa)
     rosa: '#f8e3e6',
     verde: '#e1eedf',
-    lilas: '#e8e1f4',
-    areia: '#f5ead9',
+    azul: '#d9e7f6',
+    areia: '#f6ebe4',
+    traco: '#5d86b3',          // cor dos desenhos de fundo (linhas finas)
   },
 
   // Fotos (arquivos em frontend/public/img/). Hoje são imagens ILUSTRATIVAS geradas por IA:
@@ -44,9 +45,9 @@ export const marca = {
   imagemPadrao: '/img/hero.jpg',          // categorias sem foto própria
 
   passos: [
-    { titulo: 'Escolha o serviço', texto: 'Veja preços e duração de cada serviço.' },
-    { titulo: 'Reserve o horário', texto: 'Só aparecem horários realmente livres.' },
-    { titulo: 'Pronto!', texto: 'Com conta, você acompanha e cancela quando quiser. Sem conta, também dá.' },
+    { icone: 'tesoura', titulo: 'Escolha o serviço', texto: 'Veja preços e duração de cada serviço.' },
+    { icone: 'calendario', titulo: 'Reserve o horário', texto: 'Só aparecem horários realmente livres.' },
+    { icone: 'check', titulo: 'Pronto!', texto: 'Com conta, você acompanha e cancela quando quiser. Sem conta, também dá.' },
   ],
 
   // PROVISÓRIOS — troque pelos dados reais da profissional
@@ -66,7 +67,7 @@ export function aplicarMarca() {
   const mapa = {
     '--cor-primaria': c.primaria, '--cor-primaria-escura': c.primariaEscura, '--cor-fundo': c.fundo,
     '--cor-texto': c.texto, '--cor-suave': c.suave, '--cor-borda': c.borda,
-    '--tom-rosa': c.rosa, '--tom-verde': c.verde, '--tom-lilas': c.lilas, '--tom-areia': c.areia,
+    '--tom-rosa': c.rosa, '--tom-verde': c.verde, '--tom-azul': c.azul, '--tom-areia': c.areia, '--cor-traco': c.traco,
   };
   Object.entries(mapa).forEach(([k, v]) => estilo.setProperty(k, v));
   document.title = `${marca.nome} · Agendamento online`;

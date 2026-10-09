@@ -43,6 +43,9 @@ export default function App() {
     window.scrollTo?.(0, 0);
   }, [pathname, hash]);
 
+  // O painel da profissional usa fundo neutro (sem azul/desenhos), para trabalhar sem distração
+  useEffect(() => { document.body.classList.toggle('painel', noPainel); }, [noPainel]);
+
   const classeMain = noPainel ? 'conteudo conteudo--largo' : home ? 'conteudo conteudo--home' : 'conteudo';
 
   return (
