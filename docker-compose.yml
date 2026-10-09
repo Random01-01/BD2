@@ -10,7 +10,7 @@ services:
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
-      - ./database/mysql:/docker-entrypoint-initdb.d:ro   # executa 01, 02 e 03 na criação
+      - ./database/mysql:/docker-entrypoint-initdb.d:ro   # executa 01 a 04 na criação
       - mysql-dados:/var/lib/mysql
 volumes:
   mysql-dados:

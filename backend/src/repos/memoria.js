@@ -27,8 +27,9 @@ export function criarRepoMemoria({ fuso = 'America/Sao_Paulo' } = {}) {
       { id_cliente: 3, nome: 'Carla Mendes', telefone: '(18) 96666-4444', email: 'carla@email.com' },
     ],
     agendamentos: [],
+    contas: [],
     usuarios: [{ id_usuario: 1, id_profissional: 1, nome: 'Mariana Admin', email: 'admin@mariana.com', senha_hash: bcrypt.hashSync('admin123', 10), perfil: 'ADMIN' }],
-    seq: { cliente: 3, agendamento: 0, servico: 4, categoria: 3, horario: 0, bloqueio: 0 },
+    seq: { conta: 0, cliente: 3, agendamento: 0, servico: 4, categoria: 3, horario: 0, bloqueio: 0 },
   };
 
   db.seq.horario = db.janelas.length;
@@ -73,6 +74,42 @@ export function criarRepoMemoria({ fuso = 'America/Sao_Paulo' } = {}) {
       const a = db.agendamentos.find((x) => x.id_agendamento === id);
       const c = a && db.clientes.find((x) => x.id_cliente === a.id_cliente);
       if (!a || semDigitos(c.telefone) !== telefone || !['PENDENTE', 'CONFIRMADO'].includes(a.status)) return false;
+      Object.assign(a, { status: 'CANCELADO', motivo_cancelamento: motivo, data_cancelamento: new Date().toISOString() });
+      return true;
+    },
+
+    // ===== Conta de cliente (opcional) =====
+    async buscarContaPorEmail(email) {
+      const k = db.contas.find((x) => x.email === email);
+      if (!k) return null;
+      const c = db.clientes.find((x) => x.id_cliente === k.id_cliente);
+      return { id_conta: k.id_conta, id_cliente: k.id_cliente, nome: c.nome, telefone: c.telefone, email: k.email, senha_hash: k.senha_hash };
+    },
+    async criarConta({ nome, telefone, email, senha_hash }) {
+      if (db.contas.some((x) => x.email === email)) throw new ConflitoError('Já existe uma conta com este e-mail.');
+      const c = { id_cliente: ++db.seq.cliente, nome, telefone, email };
+      db.clientes.push(c);
+      const k = { id_conta: ++db.seq.conta, id_cliente: c.id_cliente, email, senha_hash };
+      db.contas.push(k);
+      return { id_conta: k.id_conta, id_cliente: c.id_cliente, nome, telefone, email };
+    },
+    async obterPerfilCliente(idCliente) {
+      const c = db.clientes.find((x) => x.id_cliente === idCliente);
+      const k = db.contas.find((x) => x.id_cliente === idCliente);
+      return c && k ? { id_cliente: c.id_cliente, nome: c.nome, telefone: c.telefone, email: k.email } : null;
+    },
+    async agendamentosDoCliente(idCliente) {
+      return db.agendamentos.filter((a) => a.id_cliente === idCliente)
+        .sort((a, b) => b.data_agendamento.localeCompare(a.data_agendamento) || b.hora_inicio.localeCompare(a.hora_inicio))
+        .map((a) => {
+          const s = db.servicos.find((x) => x.id_servico === a.id_servico);
+          return { id_agendamento: a.id_agendamento, data_agendamento: a.data_agendamento, hora_inicio: a.hora_inicio, hora_fim: a.hora_fim,
+            status: a.status, id_servico: s.id_servico, servico: s.nome, preco: a.preco_cobrado ?? s.preco };
+        });
+    },
+    async cancelarDoCliente({ id, idCliente, motivo }) {
+      const a = db.agendamentos.find((x) => x.id_agendamento === id && x.id_cliente === idCliente);
+      if (!a || !['PENDENTE', 'CONFIRMADO'].includes(a.status)) return false;
       Object.assign(a, { status: 'CANCELADO', motivo_cancelamento: motivo, data_cancelamento: new Date().toISOString() });
       return true;
     },
@@ -186,7 +223,7 @@ export function criarRepoMemoria({ fuso = 'America/Sao_Paulo' } = {}) {
     },
     async travarProfissional() {},
     async upsertCliente({ nome, telefone, email }) {
-      const c = db.clientes.find((x) => semDigitos(x.telefone) === telefone);
+      const c = db.clientes.find((x) => semDigitos(x.telefone) === telefone && !db.contas.some((k) => k.id_cliente === x.id_cliente));
       if (c) { c.email ??= email; return c.id_cliente; }
       db.clientes.push({ id_cliente: ++db.seq.cliente, nome, telefone, email });
       return db.seq.cliente;

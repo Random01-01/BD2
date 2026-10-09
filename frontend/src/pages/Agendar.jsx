@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
+import { useAuth } from '../auth.jsx';
 import { dataExtenso, duracao, hojeSP, mascararTelefone, moeda, somarDias } from '../utils.js';
 
 const ETAPAS = ['Serviço', 'Data e horário', 'Seus dados'];
 
 export default function Agendar() {
+  const { sessao, ehCliente, sair } = useAuth();
+  const [params] = useSearchParams();
   const [etapa, setEtapa] = useState(0);
   const [servicos, setServicos] = useState(null);
   const [erroCarga, setErroCarga] = useState('');
@@ -25,7 +28,12 @@ export default function Agendar() {
   const limite = somarDias(hoje, 90);
 
   useEffect(() => {
-    api.servicos().then(setServicos).catch((e) => setErroCarga(e.message));
+    api.servicos().then((lista) => {
+      setServicos(lista);
+      const pre = lista.find((x) => x.id_servico === Number.parseInt(params.get('servico'), 10)); // veio da página inicial
+      if (pre) { setServico(pre); setEtapa(1); }
+    }).catch((e) => setErroCarga(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { titulo.current?.focus(); }, [etapa, confirmado]);
@@ -59,11 +67,12 @@ export default function Agendar() {
     try {
       const r = await api.agendar({
         id_servico: servico.id_servico, data, hora_inicio: hora,
-        cliente: { nome: form.nome, telefone: form.telefone, email: form.email },
+        ...(ehCliente ? {} : { cliente: { nome: form.nome, telefone: form.telefone, email: form.email } }),
         observacao: form.observacao || undefined,
-      });
+      }, ehCliente ? sessao.token : undefined);
       setConfirmado(r);
     } catch (err) {
+      if (err.status === 401 && ehCliente) { sair(); setErro('Sua sessão expirou. Entre novamente ou continue sem conta.'); return; }
       setErro(err.detalhes?.length ? `${err.message} ${err.detalhes.join('; ')}.` : err.message);
       if (err.status === 409) { setEtapa(1); setData((d) => d); api.disponibilidade(servico.id_servico, data).then((r2) => { setHorarios(r2.horarios); setHora(''); }); }
     } finally { setEnviando(false); }
@@ -90,8 +99,13 @@ export default function Agendar() {
           <div><dt>Valor</dt><dd>{moeda(confirmado.preco_cobrado)}</dd></div>
           <div><dt>Nº do agendamento</dt><dd><strong>#{confirmado.id_agendamento}</strong></dd></div>
         </dl>
-        <p>Guarde o número <strong>#{confirmado.id_agendamento}</strong> e o telefone usado: você vai precisar deles se quiser <Link to="/cancelar">cancelar</Link>.</p>
-        <div className="acoes"><button type="button" className="btn btn--primario" onClick={reiniciar}>Fazer outro agendamento</button></div>
+        {ehCliente
+          ? <p>Acompanhe e cancele quando quiser em <Link to="/minha-conta">Minha conta</Link>.</p>
+          : <p>Guarde o número <strong>#{confirmado.id_agendamento}</strong> e o telefone usado: você vai precisar deles se quiser <Link to="/cancelar">cancelar</Link>. Quer evitar isso nas próximas vezes? <Link to="/cadastro">Crie uma conta</Link>.</p>}
+        <div className="acoes">
+          <Link className="btn" to="/">Voltar ao início</Link>
+          <button type="button" className="btn btn--primario" onClick={reiniciar}>Fazer outro agendamento</button>
+        </div>
       </section>
     );
   }
@@ -172,10 +186,14 @@ export default function Agendar() {
 
       {etapa === 2 && (
         <form onSubmit={confirmar} noValidate={false}>
-          <h1 id="t-etapa" ref={titulo} tabIndex={-1} className="titulo">Seus dados</h1>
+          <h1 id="t-etapa" ref={titulo} tabIndex={-1} className="titulo">{ehCliente ? 'Confirme seu agendamento' : 'Seus dados'}</h1>
           <p className="resumo-linha">
             <strong>{servico.nome}</strong> · {dataExtenso(data)} às <strong>{hora}</strong> · {moeda(servico.preco)}
           </p>
+          {ehCliente
+            ? <p className="muted">Agendando como <strong>{sessao.usuario.nome}</strong>{sessao.usuario.telefone ? ` · ${sessao.usuario.telefone}` : ''}.</p>
+            : null}
+          {!ehCliente && (<>
           <div className="campo">
             <label htmlFor="nome">Nome completo</label>
             <input id="nome" required minLength={2} maxLength={100} autoComplete="name" value={form.nome} onChange={set('nome')} />
@@ -190,6 +208,7 @@ export default function Agendar() {
             <label htmlFor="email">E-mail <span className="muted">(opcional)</span></label>
             <input id="email" type="email" autoComplete="email" value={form.email} onChange={set('email')} />
           </div>
+          </>)}
           <div className="campo">
             <label htmlFor="obs">Observação <span className="muted">(opcional)</span></label>
             <textarea id="obs" rows={3} maxLength={500} value={form.observacao} onChange={set('observacao')} />

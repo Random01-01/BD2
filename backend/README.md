@@ -42,8 +42,11 @@ Corpo do `POST /api/agendamentos`:
 ### Painel administrativo (header `Authorization: Bearer <token>`)
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/auth/login` | `{ "email", "senha" }` → `{ token, usuario }` |
+| POST | `/api/auth/login` | `{ "email", "senha" }` → `{ token, usuario }`. **Login único:** `usuario.tipo` é `admin` (profissional) ou `cliente` |
 | GET | `/api/admin/agenda?inicio=AAAA-MM-DD&fim=AAAA-MM-DD` | Agenda do período |
+| POST | `/api/clientes/cadastro` | Cria conta de cliente (`nome`, `telefone`, `email`, `senha` ≥ 8) e devolve `token` |
+| GET | `/api/cliente/perfil` · `/api/cliente/agendamentos` | Área do cliente (token de cliente) |
+| POST | `/api/cliente/agendamentos/:id/cancelar` | Cancela sem pedir telefone |
 | GET | `/api/admin/resumo` | Dashboard: hoje, 7 dias, pendentes, próximos |
 | GET/POST/PUT/DELETE | `/api/admin/servicos[/:id]` | Serviços (inclui inativos) |
 | GET/POST/PUT/DELETE | `/api/admin/categorias[/:id]` | Categorias |
@@ -66,5 +69,5 @@ Transições permitidas: `PENDENTE → CONFIRMADO/CANCELADO`, `CONFIRMADO → CO
 ## Arquitetura e verificação
 - `src/repos/mysql.js`: **toda** a SQL do sistema (MySQL). `src/repos/memoria.js`: mesma interface, em memória (testes e modo demo).
 - Regras (`src/disponibilidade.js`, `src/slots.js`, rotas) não dependem do banco.
-- `npm test`: 19 testes — cálculo de horários e a API via HTTP (disponibilidade, criação, conflitos, 5 requisições simultâneas, cancelamento, login, agenda, mudança de status).
+- `npm test`: 33 testes — cálculo de horários e a API via HTTP (disponibilidade, criação, conflitos, 5 requisições simultâneas, cancelamento, login, agenda, mudança de status).
 - ⚠️ **A camada `repos/mysql.js` ainda não foi executada contra um MySQL real** (o ambiente de desenvolvimento não tinha MySQL). Primeiro passo no seu computador: rodar os scripts do banco, `npm run dev` e testar `/api/servicos`, `/api/disponibilidade` e um agendamento. Se aparecer erro de SQL, envie a mensagem (sem a senha).

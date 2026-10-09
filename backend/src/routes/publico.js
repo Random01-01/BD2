@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { dataValida, horaValida, normalizarTelefone } from '../datas.js';
 import { buscarHorariosLivres } from '../disponibilidade.js';
+import { clienteOpcional } from '../auth.js';
 import { somarMinutos } from '../slots.js';
 
 export function rotasPublicas(repo, config) {
@@ -25,8 +26,12 @@ export function rotasPublicas(repo, config) {
   });
 
   // Cria agendamento
-  r.post('/agendamentos', async (req, res) => {
-    const { id_servico, data, hora_inicio, cliente = {}, observacao } = req.body ?? {};
+  // Com token de cliente, o agendamento entra na conta dele (nome e telefone vêm do cadastro).
+  r.post('/agendamentos', clienteOpcional(config.jwtSecret), async (req, res) => {
+    const { id_servico, data, hora_inicio, cliente: dadosForm = {}, observacao } = req.body ?? {};
+    const perfil = req.cliente ? await repo.obterPerfilCliente(req.cliente.id_cliente) : null;
+    if (req.cliente && !perfil) return res.status(401).json({ erro: 'Conta não encontrada. Entre novamente.' });
+    const cliente = perfil ?? dadosForm;
     const telefone = normalizarTelefone(cliente.telefone);
     const nome = String(cliente.nome ?? '').trim();
     const email = String(cliente.email ?? '').trim() || null;
@@ -52,7 +57,7 @@ export function rotasPublicas(repo, config) {
         return { status: 409, corpo: { erro: 'Este horário não está mais disponível. Escolha outro.' } };
       }
 
-      const idCliente = await tx.upsertCliente({ nome, telefone, email });
+      const idCliente = perfil ? perfil.id_cliente : await tx.upsertCliente({ nome, telefone, email });
       const agendamento = await tx.inserirAgendamento({
         id_cliente: idCliente,
         id_servico: servico.id_servico,

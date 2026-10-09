@@ -21,20 +21,24 @@ beforeAll(async () => {
   globalThis.fetch = (url, opts) => realFetch(`http://localhost:${porta}${url}`, opts); // o front usa caminhos relativos
 });
 afterAll(() => { servidor.close(); globalThis.fetch = realFetch; });
-afterEach(() => { cleanup(); sessionStorage.clear(); });
+afterEach(() => { cleanup(); sessionStorage.clear(); localStorage.clear(); });
 
 const abrir = (rota = '/') => render(
   <MemoryRouter initialEntries={[rota]}><AuthProvider><App /></AuthProvider></MemoryRouter>,
 );
 
+async function escolherSemConta(user, nome = /Escova/) {
+  abrir('/');
+  await user.click(await screen.findByRole('button', { name: `Agendar ${nome.source ?? nome}` }));
+  expect(await screen.findByRole('heading', { name: 'Como você prefere continuar?' })).toBeInTheDocument();
+  await user.click(screen.getByRole('link', { name: 'Continuar sem conta' }));
+  expect(await screen.findByRole('heading', { name: 'Escolha o dia e o horário' })).toBeInTheDocument(); // serviço já vem marcado
+}
+
 describe('fluxo do cliente', () => {
   it('agenda um serviço do início ao fim e mostra a confirmação', async () => {
     const user = userEvent.setup();
-    abrir('/');
-
-    // 1. serviço
-    await user.click(await screen.findByLabelText(/Escova/));
-    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    await escolherSemConta(user);
 
     // 2. data e horário (próxima terça; o seed ocupa 10:00-11:00 e 11:30-12:15)
     const terca = proximaData(2, hojeSP(), 2);
@@ -57,9 +61,7 @@ describe('fluxo do cliente', () => {
 
   it('o horário agendado deixa de aparecer para outro cliente', async () => {
     const user = userEvent.setup();
-    abrir('/');
-    await user.click(await screen.findByLabelText(/Escova/));
-    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    await escolherSemConta(user);
     fireEvent.change(await screen.findByLabelText('Data'), { target: { value: proximaData(2, hojeSP(), 2) } });
     const grupo = await screen.findByRole('group', { name: 'Horários disponíveis' });
     expect(within(grupo).queryByLabelText('14:00')).toBeNull();
@@ -68,9 +70,7 @@ describe('fluxo do cliente', () => {
 
   it('dia sem atendimento mostra aviso', async () => {
     const user = userEvent.setup();
-    abrir('/');
-    await user.click(await screen.findByLabelText(/Escova/));
-    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    await escolherSemConta(user);
     fireEvent.change(await screen.findByLabelText('Data'), { target: { value: proximaData(0, hojeSP(), 2) } }); // domingo
     expect(await screen.findByText(/Sem horários neste dia/)).toBeInTheDocument();
   });
@@ -93,7 +93,7 @@ describe('painel da profissional', () => {
   it('exige login, mostra a agenda e conclui um atendimento', async () => {
     const user = userEvent.setup();
     abrir('/admin');
-    expect(await screen.findByRole('heading', { name: 'Área da profissional' })).toBeInTheDocument(); // redirecionou
+    expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeInTheDocument(); // redirecionou
 
     await user.type(screen.getByLabelText('E-mail'), 'admin@mariana.com');
     await user.type(screen.getByLabelText('Senha'), 'errada');
@@ -201,5 +201,73 @@ describe('painel: agenda semanal, serviços e horários', () => {
     fireEvent.change(screen.getByLabelText('De'), { target: { value: proximaData(2, hojeSP(), 2) } });
     await user.click(within(screen.getByRole('form', { name: 'Adicionar folga' })).getByRole('button', { name: 'Adicionar' }));
     expect(await screen.findByText(/já existem \d+ agendamento/)).toBeInTheDocument();
+  });
+});
+
+describe('home, conta de cliente e login único', () => {
+  const quarta = () => proximaData(3, hojeSP(), 2);
+
+  it('home apresenta os serviços e tem botão de entrar', async () => {
+    abrir('/');
+    expect(await screen.findByRole('heading', { name: /Beleza com calma/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Agendar Coloração' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Entrar' }).length).toBeGreaterThan(0);
+  });
+
+  it('cria conta no meio do agendamento, agenda sem digitar dados, vê em Meus agendamentos e cancela', async () => {
+    const user = userEvent.setup();
+    abrir('/');
+    await user.click(await screen.findByRole('button', { name: 'Agendar Design de sobrancelha' }));
+    await user.click(await screen.findByRole('link', { name: 'Criar conta' }));
+
+    await user.type(screen.getByLabelText('Nome completo'), 'Bia Souza');
+    await user.type(screen.getByLabelText('Telefone (WhatsApp)'), '18999991111');
+    await user.type(screen.getByLabelText('E-mail'), 'bia@teste.com');
+    await user.type(screen.getByLabelText('Senha'), 'senha-segura-1');
+    await user.type(screen.getByLabelText('Repita a senha'), 'outra-senha');
+    await user.click(screen.getByRole('button', { name: 'Criar conta' }));
+    expect(await screen.findByText('As senhas não conferem.')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Repita a senha'));
+    await user.type(screen.getByLabelText('Repita a senha'), 'senha-segura-1');
+    await user.click(screen.getByRole('button', { name: 'Criar conta' }));
+
+    // voltou ao agendamento com o serviço marcado
+    fireEvent.change(await screen.findByLabelText('Data'), { target: { value: quarta() } });
+    const grupo = await screen.findByRole('group', { name: 'Horários disponíveis' });
+    await user.click(within(grupo).getByLabelText('09:00'));
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(await screen.findByText(/Agendando como/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nome completo')).toBeNull(); // sem formulário de dados
+    await user.click(screen.getByRole('button', { name: 'Confirmar agendamento' }));
+    expect(await screen.findByRole('heading', { name: /Agendamento confirmado/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Minha conta' }));
+    const item = (await screen.findByText('Design de sobrancelha')).closest('li');
+    await user.click(within(item).getByRole('button', { name: 'Cancelar' }));
+    await user.click(within(item).getByRole('button', { name: /^Sim/ }));
+    expect(await screen.findByText('Agendamento cancelado.')).toBeInTheDocument();
+  });
+
+  it('cliente logada entra por "Entrar", cai em Minha conta e pula a tela de identificação', async () => {
+    const user = userEvent.setup();
+    abrir('/entrar');
+    await user.type(await screen.findByLabelText('E-mail'), 'bia@teste.com');
+    await user.type(screen.getByLabelText('Senha'), 'senha-segura-1');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+    expect(await screen.findByRole('heading', { name: /Olá, Bia/ })).toBeInTheDocument(); // Minha conta
+    await user.click(screen.getAllByRole('link', { name: 'Serviços' })[0]);
+    await user.click(await screen.findByRole('button', { name: 'Agendar Escova' }));
+    expect(await screen.findByRole('heading', { name: 'Escolha o dia e o horário' })).toBeInTheDocument();
+  });
+
+  it('login de administradora pelo botão da home leva ao dashboard', async () => {
+    const user = userEvent.setup();
+    abrir('/');
+    await user.click((await screen.findAllByRole('link', { name: 'Entrar' }))[0]);
+    await user.type(await screen.findByLabelText('E-mail'), 'admin@mariana.com');
+    await user.type(screen.getByLabelText('Senha'), 'admin123');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+    expect(await screen.findByText('Próximos atendimentos')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Painel da profissional' })).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { ConflitoError } from './erros.js';
 import { rotasAdmin } from './routes/admin.js';
+import { rotasCliente } from './routes/cliente.js';
 import { rotasPublicas } from './routes/publico.js';
 
 // Express 4 não captura erros de funções async sozinho; este envoltório resolve.
@@ -35,6 +36,7 @@ export function criarApp(repo, config) {
 
   app.use('/api', comCaptura(rotasPublicas(repo, config)));
   app.use('/api', comCaptura(rotasAdmin(repo, config)));
+  app.use('/api', comCaptura(rotasCliente(repo, config)));
 
   app.use('/api', (_req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
   // eslint-disable-next-line no-unused-vars

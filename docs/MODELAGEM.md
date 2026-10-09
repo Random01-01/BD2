@@ -286,7 +286,8 @@ Os scripts estão em `database/mysql/` (detalhes e passo a passo em `database/my
 
 1. `01_schema_original.sql` — o banco do Relatório Parcial (7 tabelas, triggers, dados de teste);
 2. `02_melhorias.sql` — `preco_cobrado`, `CHECK`s, índice por telefone e `bloqueio_agenda`;
-3. `03_dev_admin.sql` — senha de teste do painel (**só desenvolvimento**).
+3. `03_dev_admin.sql` — senha de teste do painel (**só desenvolvimento**);
+4. `04_conta_cliente.sql` — tabela `conta_cliente` (`id_cliente` único → `cliente`, `email` único, `senha_hash`): conta **opcional**. Quem agenda sem conta continua só em `cliente`; clientes com conta nunca são reaproveitados por agendamentos sem conta.
 
 Melhorias já aplicadas pelo `02` e pontos que ficam na API:
 

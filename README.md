@@ -32,13 +32,17 @@ Sistema web para uma profissional autônoma da área da beleza (cenário inicial
 | Melhorias do banco (`preco_cobrado`, validações, folgas) | ✅ script pronto (`02_melhorias.sql`) |
 | API: serviços, horários livres, agendar, cancelar | ✅ |
 | API: login e agenda da profissional, mudar status | ✅ |
-| Site do cliente: escolher serviço → data/horário → dados → confirmação | ✅ |
-| Site do cliente: cancelar horário | ✅ |
+| **Página inicial** com apresentação dos serviços (filtro por categoria), como funciona e contato | ✅ |
+| Agendar: serviço → *entrar / criar conta / continuar sem conta* → data/horário → confirmação | ✅ |
+| Site do cliente: cancelar horário sem conta (nº + telefone) | ✅ |
+| **Conta opcional de cliente**: cadastro, login, “Meus agendamentos” e cancelar sem digitar nº/telefone | ✅ |
+| Login único (cliente → Minha conta; profissional → painel) | ✅ |
+| Identidade visual editável em um arquivo (`frontend/src/marca.js`) — **nome e cores provisórios** | ✅ |
 | Painel: login + **dashboard** (hoje, próximos 7 dias, pendentes, próximos atendimentos) | ✅ |
 | Painel: **agenda** por dia e por semana (confirmar, concluir, cancelar) | ✅ |
 | Painel: cadastro de **serviços** e categorias (criar, editar, ativar/desativar, excluir) | ✅ |
 | Painel: **horários de atendimento** e folgas/feriados | ✅ |
-| Login de cliente (conta opcional, “Meus agendamentos”) | ⏳ próxima etapa |
+| Remarcar horário pela conta do cliente | ⏳ |
 | Painel: clientes e relatórios | ⏳ etapa 3 |
 | Lembretes por WhatsApp | ⏳ melhoria futura (hoje só um link `wa.me`) |
 | Publicação na nuvem | ⏳ |
@@ -109,11 +113,11 @@ No modo demo nada é gravado em banco; os dados somem ao reiniciar. Serve para v
 **A) MySQL Workbench**
 1. Conecte em `localhost:3306` com o seu usuário (ex.: `root`).
 2. Abra e execute, **nesta ordem**, os arquivos de `database/mysql/`:
-   `01_schema_original.sql` → `02_melhorias.sql` → `03_dev_admin.sql`.
+   `01_schema_original.sql` → `02_melhorias.sql` → `03_dev_admin.sql` → `04_conta_cliente.sql`.
    (Rode o `02` só uma vez. Para recomeçar, rode o `01` de novo: ele recria o banco.)
 3. Confira: `SELECT VERSION();` deve ser 8.0.16 ou maior, e `SELECT * FROM servico;` deve listar 4 serviços.
 
-**B) Docker (alternativa)**: `docker compose up -d` na raiz já cria o banco com os 3 scripts. Usuário `root`, senha `agendamento_dev`.
+**B) Docker (alternativa)**: `docker compose up -d` na raiz já cria o banco com os 4 scripts. Usuário `root`, senha `agendamento_dev`.
 
 **Configurar e subir a API**
 ```bash
@@ -136,16 +140,23 @@ Abra `http://localhost:3001/api/saude` → deve aparecer `{"ok":true}`. Depois `
 ## 5. Como o sistema funciona
 
 ### Fluxo do cliente
-1. Escolhe o **serviço** (agrupado por categoria, com preço e duração).
-2. Escolhe a **data**; o sistema mostra só os **horários livres**.
-3. Informa **nome e telefone** (e-mail e observação opcionais) e confirma.
-4. Recebe a confirmação com o **nº do agendamento**. Para cancelar, informa o nº e o telefone.
+1. Na **página inicial** vê os serviços (com preço e duração) e clica em **Agendar** no que quiser.
+2. O sistema pergunta: **Entrar**, **Criar conta** ou **Continuar sem conta**.
+3. Escolhe a **data**; o sistema mostra só os **horários livres**.
+4. **Com conta:** só confirma (nome e telefone já vêm do cadastro). **Sem conta:** informa nome e telefone.
+5. Com conta, acompanha e cancela em **Meus agendamentos**. Sem conta, guarda o **nº do agendamento** e cancela com nº + telefone.
+
+A profissional entra pelo mesmo botão **Entrar** da página inicial e é levada ao painel.
+
+**Para trocar nome, cores e textos do site**, edite só `frontend/src/marca.js` (hoje: nome provisório “Studio Aurora”).
 
 ### Regras de negócio
 - Horários livres = grade semanal da profissional − folgas/feriados − agendamentos não cancelados; nunca no passado; com antecedência mínima quando for hoje.
 - O horário oferecido respeita a **duração do serviço** (um serviço de 2 h só aparece se couber).
 - **Sem conflito de horário**, em duas camadas: a API confere e o **trigger do banco** é a palavra final (HTTP 409). Cada reserva roda em transação com trava na profissional, para que duas pessoas não consigam reservar o mesmo horário ao mesmo tempo.
-- O cliente é identificado pelo **telefone** (só dígitos): o mesmo telefone reaproveita o cadastro.
+- Sem conta, o cliente é identificado pelo **telefone** (só dígitos): o mesmo telefone reaproveita o cadastro.
+- Quem **tem conta** nunca é misturado com agendamentos sem conta, mesmo com o mesmo telefone (o cadastro não é verificado por SMS/e-mail ainda; ver decisões em aberto).
+- Token de cliente não abre o painel e vice-versa (campo `tipo` no JWT).
 - O preço é gravado em `preco_cobrado` no momento do agendamento (histórico não muda se o preço mudar).
 - Status: `PENDENTE → CONFIRMADO → CONCLUIDO`, ou `CANCELADO` (libera o horário).
 
@@ -164,6 +175,8 @@ Base: `/api`. Detalhes e exemplos em [`backend/README.md`](backend/README.md).
 | `POST /agendamentos` | público | cria agendamento (409 se ocupado) |
 | `POST /agendamentos/:id/cancelar` | público | cliente cancela (nº + telefone) |
 | `POST /auth/login` | público | devolve token JWT |
+| `POST /clientes/cadastro` | público | cria conta de cliente e já devolve o token |
+| `GET /cliente/perfil`, `GET /cliente/agendamentos`, `POST /cliente/agendamentos/:id/cancelar` | cliente | área “Minha conta” |
 | `GET /admin/agenda?inicio=&fim=` | profissional | agenda do período |
 | `PATCH /admin/agendamentos/:id` | profissional | confirmar, concluir ou cancelar |
 | `GET /admin/resumo` | profissional | dados do dashboard |
@@ -174,8 +187,8 @@ Base: `/api`. Detalhes e exemplos em [`backend/README.md`](backend/README.md).
 
 ## 7. Testes
 ```bash
-cd backend  && npm test    # horários livres + API pública e do painel (26 testes)
-cd frontend && npm test    # fluxo do cliente e do painel ligados à API (9 testes)
+cd backend  && npm test    # horários livres + API pública e do painel (33 testes)
+cd frontend && npm test    # fluxo do cliente e do painel ligados à API (13 testes)
 ```
 Os testes não precisam de MySQL (usam o repositório em memória). A ligação com o MySQL real ainda precisa ser validada (ver seção 1).
 
@@ -214,6 +227,8 @@ Conforme o Plano de Ação.
 - [ ] Refazer o DER no Workbench após o `02_melhorias.sql`
 
 ## 11. Decisões em aberto
+- [ ] **Verificação da conta de cliente** (e-mail/SMS) e “esqueci a senha” — hoje a conta não é verificada
+- [ ] Nome, logo, cores, fotos e contatos reais do salão → `frontend/src/marca.js`
 - [ ] O agendamento nasce `CONFIRMADO` ou `PENDENTE` (a profissional aprova)? → `STATUS_INICIAL` no `.env`
 - [ ] Prazo mínimo para o cliente cancelar?
 - [ ] Passo dos horários (30 min?) e antecedência mínima → `PASSO_MINUTOS` e `ANTECEDENCIA_MINUTOS`

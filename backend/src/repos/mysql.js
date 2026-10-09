@@ -56,6 +56,47 @@ function consultas(ex) {
       return r[0].affectedRows > 0;
     },
 
+
+    // ===== Conta de cliente (opcional) — exige database/mysql/04_conta_cliente.sql =====
+    async buscarContaPorEmail(email) {
+      const rows = await q(
+        `SELECT k.id_conta, k.id_cliente, c.nome, c.telefone, k.email, k.senha_hash
+           FROM conta_cliente k JOIN cliente c ON c.id_cliente = k.id_cliente WHERE k.email = ?`, [email]);
+      return rows[0] ?? null;
+    },
+
+    async criarConta({ nome, telefone, email, senha_hash }) {
+      const c = await ex.query('INSERT INTO cliente (nome, telefone, email) VALUES (?, ?, ?)', [nome, telefone, email]);
+      try {
+        const k = await ex.query('INSERT INTO conta_cliente (id_cliente, email, senha_hash) VALUES (?, ?, ?)', [c[0].insertId, email, senha_hash]);
+        return { id_conta: k[0].insertId, id_cliente: c[0].insertId, nome, telefone, email };
+      } catch (e) {
+        if (ehDuplicado(e)) throw new ConflitoError('Já existe uma conta com este e-mail.');
+        throw e;
+      }
+    },
+
+    async obterPerfilCliente(idCliente) {
+      const rows = await q(
+        `SELECT c.id_cliente, c.nome, c.telefone, k.email
+           FROM cliente c JOIN conta_cliente k ON k.id_cliente = c.id_cliente WHERE c.id_cliente = ?`, [idCliente]);
+      return rows[0] ?? null;
+    },
+
+    agendamentosDoCliente: (idCliente) => q(
+      `SELECT a.id_agendamento, a.data_agendamento, ${HORA('a.hora_inicio')} AS hora_inicio,
+              ${HORA('a.hora_fim')} AS hora_fim, a.status, s.id_servico, s.nome AS servico,
+              COALESCE(a.preco_cobrado, s.preco) AS preco
+         FROM agendamento a JOIN servico s ON s.id_servico = a.id_servico
+        WHERE a.id_cliente = ? ORDER BY a.data_agendamento DESC, a.hora_inicio DESC`, [idCliente]),
+
+    async cancelarDoCliente({ id, idCliente, motivo }) {
+      const r = await ex.query(
+        `UPDATE agendamento SET status = 'CANCELADO', motivo_cancelamento = ?, data_cancelamento = NOW()
+          WHERE id_agendamento = ? AND id_cliente = ? AND status IN ('PENDENTE','CONFIRMADO')`, [motivo, id, idCliente]);
+      return r[0].affectedRows > 0;
+    },
+
     async buscarUsuarioPorEmail(email) {
       const rows = await q(
         `SELECT id_usuario, id_profissional, nome, email, senha_hash, perfil
@@ -226,7 +267,11 @@ function consultas(ex) {
     },
 
     async upsertCliente({ nome, telefone, email }) {
-      const rows = await q(`SELECT id_cliente FROM cliente WHERE ${SO_DIGITOS('telefone')} = ? LIMIT 1`, [telefone]);
+      // clientes com conta (tabela conta_cliente) nunca são reaproveitados por agendamentos sem conta
+      const rows = await q(
+        `SELECT id_cliente FROM cliente
+          WHERE ${SO_DIGITOS('telefone')} = ?
+            AND NOT EXISTS (SELECT 1 FROM conta_cliente k WHERE k.id_cliente = cliente.id_cliente) LIMIT 1`, [telefone]);
       if (rows.length) {
         if (email) await q('UPDATE cliente SET email = COALESCE(email, ?) WHERE id_cliente = ?', [email, rows[0].id_cliente]);
         return rows[0].id_cliente;

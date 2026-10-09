@@ -27,7 +27,12 @@ async function req(caminho, { method = 'GET', corpo, token } = {}) {
 export const api = {
   servicos: () => req('/servicos'),
   disponibilidade: (servico, data) => req(`/disponibilidade?servico=${servico}&data=${data}`),
-  agendar: (corpo) => req('/agendamentos', { method: 'POST', corpo }),
+  agendar: (corpo, token) => req('/agendamentos', { method: 'POST', corpo, token }),
+  cadastro: (dados) => req('/clientes/cadastro', { method: 'POST', corpo: dados }),
+  cliente: (token) => ({
+    agendamentos: () => req('/cliente/agendamentos', { token }),
+    cancelar: (id, motivo) => req(`/cliente/agendamentos/${id}/cancelar`, { method: 'POST', corpo: { motivo }, token }),
+  }),
   cancelar: (id, telefone, motivo) => req(`/agendamentos/${id}/cancelar`, { method: 'POST', corpo: { telefone, motivo } }),
   login: (email, senha) => req('/auth/login', { method: 'POST', corpo: { email, senha } }),
   agenda: (token, inicio, fim) => req(`/admin/agenda?inicio=${inicio}&fim=${fim}`, { token }),

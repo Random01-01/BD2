@@ -1,31 +1,42 @@
+// Login único: a profissional vai para o painel, a cliente para "Minha conta" (ou de volta ao agendamento).
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
+import { Mensagens } from '../components.jsx';
+
+export function destinoPosLogin(tipo, de) {
+  if (tipo === 'admin') return de?.startsWith('/admin') ? de : '/admin';
+  return de && !de.startsWith('/admin') ? de : '/minha-conta';
+}
 
 export default function Login() {
   const { sessao, entrar } = useAuth();
   const navegar = useNavigate();
-  const destino = useLocation().state?.de || '/admin';
+  const { state } = useLocation();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
 
-  if (sessao) return <Navigate to={destino} replace />;
+  if (sessao) return <Navigate to={destinoPosLogin(sessao.usuario?.tipo ?? 'admin', state?.de)} replace />;
 
   async function enviar(e) {
     e.preventDefault();
     setErro(''); setEnviando(true);
-    try { entrar(await api.login(email, senha)); navegar(destino, { replace: true }); }
-    catch (err) { setErro(err.message); }
+    try {
+      const dados = await api.login(email, senha);
+      entrar(dados);
+      navegar(destinoPosLogin(dados.usuario.tipo, state?.de), { replace: true });
+    } catch (err) { setErro(err.message); }
     finally { setEnviando(false); }
   }
 
   return (
     <section className="cartao cartao--estreito" aria-labelledby="t">
-      <h1 id="t" className="titulo">Área da profissional</h1>
-      <div role="alert" aria-live="assertive">{erro && <p className="erro">{erro}</p>}</div>
+      <h1 id="t" className="titulo">Entrar</h1>
+      <p className="muted">Para clientes e para a profissional.</p>
+      <Mensagens erro={erro} />
       <form onSubmit={enviar}>
         <div className="campo">
           <label htmlFor="email">E-mail</label>
@@ -37,6 +48,7 @@ export default function Login() {
         </div>
         <div className="acoes"><button type="submit" className="btn btn--primario" disabled={enviando}>{enviando ? 'Entrando…' : 'Entrar'}</button></div>
       </form>
+      <p className="centro">Ainda não tem conta? <Link to="/cadastro" state={state}>Criar conta</Link></p>
     </section>
   );
 }

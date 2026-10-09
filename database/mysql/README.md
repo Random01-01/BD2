@@ -5,6 +5,7 @@
 | 1 | `01_schema_original.sql` | Banco entregue no Relatório Parcial: 7 tabelas, trigger anti-conflito e dados de teste (**recria** o banco `sistema_agendamento`) |
 | 2 | `02_melhorias.sql` | `preco_cobrado`, validações `CHECK`, índice por telefone e tabela `bloqueio_agenda` |
 | 3 | `03_dev_admin.sql` | **Só desenvolvimento.** Senha de teste do painel: `admin@mariana.com` / `admin123` |
+| 4 | `04_conta_cliente.sql` | Tabela `conta_cliente` (login opcional de cliente). Pode rodar mais de uma vez |
 
 > `01_schema_original.sql` é idêntico ao arquivo `Sistema-Agendamento (3).sql` da raiz do repositório (mantido lá por ser o arquivo entregue). Se alterar um, altere o outro.
 

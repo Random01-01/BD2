@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { assinarToken, exigirLogin } from '../auth.js';
+import { assinarToken, assinarTokenCliente, exigirLogin } from '../auth.js';
 import { dataValida } from '../datas.js';
 import { rotasPainel } from './painel.js';
 
@@ -21,13 +21,19 @@ export function rotasAdmin(repo, config) {
     const email = String(req.body?.email ?? '').trim().toLowerCase();
     const senha = String(req.body?.senha ?? '');
     const u = await repo.buscarUsuarioPorEmail(email);
-    const ok = u && (await bcrypt.compare(senha, u.senha_hash));
-    if (!ok) return res.status(401).json({ erro: 'E-mail ou senha incorretos.' });
-    res.json({ token: assinarToken(u, config.jwtSecret), usuario: { nome: u.nome, email: u.email, perfil: u.perfil } });
+    if (u && (await bcrypt.compare(senha, u.senha_hash))) {
+      return res.json({ token: assinarToken(u, config.jwtSecret), usuario: { nome: u.nome, email: u.email, perfil: u.perfil, tipo: 'admin' } });
+    }
+    // Login único: se não for a profissional, tenta conta de cliente
+    const conta = await repo.buscarContaPorEmail(email);
+    if (conta && (await bcrypt.compare(senha, conta.senha_hash))) {
+      return res.json({ token: assinarTokenCliente(conta, config.jwtSecret), usuario: { nome: conta.nome, email: conta.email, telefone: conta.telefone, perfil: 'CLIENTE', tipo: 'cliente' } });
+    }
+    res.status(401).json({ erro: 'E-mail ou senha incorretos.' });
   });
 
   const protegido = Router();
-  protegido.use(exigirLogin(config.jwtSecret));
+  protegido.use(exigirLogin(config.jwtSecret, 'admin'));
   protegido.use(rotasPainel(repo, config));
 
   // Agenda num período: /api/admin/agenda?inicio=2026-10-05&fim=2026-10-11
