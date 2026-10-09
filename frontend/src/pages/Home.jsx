@@ -34,7 +34,13 @@ export default function Home() {
           </div>
           <div className="hero__arte" aria-hidden="true">
             {marca.imagemHero
-              ? <img src={marca.imagemHero} alt="" className="hero__foto" />
+              ? (
+                <>
+                  <span className="hero__moldura" />
+                  <img src={marca.imagemHero} alt="" className="hero__foto" />
+                  <span className="hero__selo">✦ Agende online<br /><small>sem ligar, sem espera</small></span>
+                </>
+              )
               : (
                 <>
                   <span className="forma forma--rosa" /><span className="forma forma--verde" />
@@ -66,19 +72,24 @@ export default function Home() {
           <ul className="vitrine">
             {visiveis.map((s) => (
               <li key={s.id_servico} className={`servico servico--${tomDe(s)}`}>
-                <p className="servico__cat">{s.categoria || 'Outros'}</p>
-                <h3 className="servico__nome">{s.nome}</h3>
-                {s.descricao && <p className="servico__desc">{s.descricao}</p>}
-                <p className="servico__meta"><strong>{moeda(s.preco)}</strong> · {duracao(s.duracao_minutos)}</p>
-                <button type="button" className="btn btn--primario" aria-label={`Agendar ${s.nome}`}
-                  onClick={() => navegar(`/agendar/identificar?servico=${s.id_servico}`)}>Agendar</button>
+                <div className="servico__img">
+                  <img src={marca.imagensCategoria?.[s.categoria] ?? marca.imagemPadrao} alt="" loading="lazy" />
+                </div>
+                <div className="servico__corpo">
+                  <p className="servico__cat">{s.categoria || 'Outros'}</p>
+                  <h3 className="servico__nome">{s.nome}</h3>
+                  {s.descricao && <p className="servico__desc">{s.descricao}</p>}
+                  <p className="servico__meta"><strong>{moeda(s.preco)}</strong> · {duracao(s.duracao_minutos)}</p>
+                  <button type="button" className="btn btn--primario" aria-label={`Agendar ${s.nome}`}
+                    onClick={() => navegar(`/agendar/identificar?servico=${s.id_servico}`)}>Agendar</button>
+                </div>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <section id="como-funciona" className="faixa faixa--clara" aria-labelledby="t-como" tabIndex={-1}>
+      <section id="como-funciona" className="faixa faixa--escura" aria-labelledby="t-como" tabIndex={-1}>
         <div className="faixa__interno">
           <h2 id="t-como" className="faixa__titulo">Como funciona</h2>
           <ol className="passos">
@@ -93,7 +104,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="contato" className="faixa" aria-labelledby="t-contato" tabIndex={-1}>
+      <section id="contato" className="faixa faixa--areia" aria-labelledby="t-contato" tabIndex={-1}>
         <div className="faixa__interno">
           <h2 id="t-contato" className="faixa__titulo">Onde e quando</h2>
           <dl className="contato">

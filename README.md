@@ -37,7 +37,7 @@ Sistema web para uma profissional autônoma da área da beleza (cenário inicial
 | Site do cliente: cancelar horário sem conta (nº + telefone) | ✅ |
 | **Conta opcional de cliente**: cadastro, login, “Meus agendamentos” e cancelar sem digitar nº/telefone | ✅ |
 | Login único (cliente → Minha conta; profissional → painel) | ✅ |
-| Identidade visual editável em um arquivo (`frontend/src/marca.js`) — **nome e cores provisórios** | ✅ |
+| Identidade visual editável em um arquivo (`frontend/src/marca.js`) — **nome, cores e fotos provisórios** (fotos ilustrativas geradas por IA em `frontend/public/img/`) | ✅ |
 | Painel: login + **dashboard** (hoje, próximos 7 dias, pendentes, próximos atendimentos) | ✅ |
 | Painel: **agenda** por dia e por semana (confirmar, concluir, cancelar) | ✅ |
 | Painel: cadastro de **serviços** e categorias (criar, editar, ativar/desativar, excluir) | ✅ |

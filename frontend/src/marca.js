@@ -24,9 +24,17 @@ export const marca = {
     areia: '#f5ead9',
   },
 
-  // Foto da página inicial (opcional). Ex.: '/hero.jpg' (coloque o arquivo em frontend/public/).
-  // Sem foto, a home usa uma composição de formas coloridas.
-  imagemHero: null,
+  // Fotos (arquivos em frontend/public/img/). Hoje são imagens ILUSTRATIVAS geradas por IA:
+  // troque por fotos reais do salão (mesmos nomes de arquivo ou novos caminhos aqui).
+  // Sem foto (null), a home usa uma composição de formas coloridas.
+  imagemHero: '/img/hero.jpg',
+  // Foto de cada categoria de serviço (a chave é o nome da categoria cadastrada no painel).
+  imagensCategoria: {
+    'Cabelo': '/img/cabelo.jpg',
+    'Estética': '/img/estetica.jpg',
+    'Manicure e Pedicure': '/img/manicure.jpg',
+  },
+  imagemPadrao: '/img/hero.jpg',          // categorias sem foto própria
 
   passos: [
     { titulo: 'Escolha o serviço', texto: 'Veja preços e duração de cada serviço.' },
