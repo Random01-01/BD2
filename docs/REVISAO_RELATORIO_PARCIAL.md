@@ -9,7 +9,7 @@
 | Afirmação do relatório | Situação |
 |---|---|
 | Banco relacional `sistema_agendamento` em MySQL com 7 tabelas | ✔ `database/mysql/01_schema_original.sql` (hoje 8 tabelas, com `bloqueio_agenda`) |
-| Trigger impede agendamentos duplicados | ✔ e foi testado com 19 testes de API; ver ressalva 2.5 |
+| Trigger impede agendamentos duplicados | ✔ e foi testado pela API (33 testes de API em memória); ver ressalva 2.5 |
 | Melhorias futuras: interface web responsiva | ✔ feita (`frontend/`, React) |
 | Melhorias futuras: lembretes por WhatsApp | ❌ não feito (só link `wa.me` no painel) |
 
@@ -27,14 +27,18 @@ O objetivo geral (p. 6) fala em organizar "clientes, serviços, horários **e pa
 ### 2.3 Número de tabelas e DER desatualizados
 O relatório diz **7 tabelas** e mostra o DER da Figura 1. Com `02_melhorias.sql` passam a ser **8** (`bloqueio_agenda`) e `agendamento` ganha `preco_cobrado`. **Refazer o DER** no Workbench (*Database › Reverse Engineer*) depois de rodar o `02` e atualizar o texto das seções 2.4.2 e 2.5.2, e o Resumo.
 
-### 2.4 Testes do Parcial não batem com o `.sql` do repositório 👥
-| No relatório | No `.sql` do repositório |
-|---|---|
-| "inserção de **4** clientes de teste" (e nova cliente "Mayer") | 3 clientes no script |
-| Teste de conflito em **2025-06-10, 09:00** | agendamentos de teste em **2026-10-06** |
-| Mensagem: *"Conflito de horário: profissional já possui agendamento neste período"* | `ERRO: Conflito de horário! Esta profissional já possui agendamento neste intervalo.` |
+### 2.4 O texto dos testes (2.5.3) não bate com os próprios prints do relatório 👥
+Conferido com as imagens extraídas do PDF (os prints **batem com o `.sql` do repositório**; quem está diferente é o **texto**):
 
-Ou seja, o banco usado nos prints difere do script versionado. **Sugestão:** exportar do Workbench o script exato que foi usado nos testes (*Server › Data Export*) e substituir/anexar no repositório, para o Relatório Final ser reproduzível. Se o `01` do repositório divergir, o `02_melhorias.sql` pode precisar de ajuste.
+| No texto do relatório | No print / no `.sql` |
+|---|---|
+| Teste 2: conflito em **2025-06-10, 09:00** | Print: tentativa em **2026-10-06**, 10:00 às 11:00 |
+| Mensagem: *"Conflito de horário: profissional já possui agendamento neste período"* | Print: `Error Code: 1644. ERRO: Conflito de horário! Esta profissional já possui agendamento neste intervalo.` |
+| Teste 1: "inserção de **4** clientes de teste" | O script cria **3**; o 4º (Mayer) foi inserido à mão no teste. Escrever: "3 clientes do script + 1 inserido manualmente" |
+| "Foi desenvolvido **um** trigger" (2.4.2, 2.5.2) | O print `SHOW TRIGGERS` mostra **dois**: `trg_impede_conflito_horario` (INSERT) e `trg_impede_conflito_horario_update` (UPDATE) |
+| **Teste 3**: "inserção de um novo agendamento sem conflito, com status confirmado" | **Nenhum print mostra essa inserção.** Nos logs, as duas tentativas de INSERT (#42 e #43) falharam; a consulta final mostra só os 2 agendamentos do script (Ana Paula e Juliana, 06/10/2026) |
+
+**O que fazer:** corrigir o texto para o que os prints mostram. Para o Teste 3, **refazer** (inserir um agendamento em horário livre, por exemplo 06/10/2026 às 14:00) e tirar um print novo do `INSERT` com sucesso e do `SELECT`. Conferir também se cada print está sob o teste certo (o print da lista de clientes com 4 linhas é o do Teste 1).
 
 ### 2.5 Limite do trigger (convém citar no Final como aprendizado)
 O Parcial apresenta o trigger como garantia total. Na prática ele consulta e depois grava: duas reservas **simultâneas** podem passar juntas. A API mitiga com transação `READ COMMITTED` + `SELECT ... FOR UPDATE` na profissional. Vale mencionar na Discussão como limitação encontrada e a solução adotada.
@@ -51,10 +55,10 @@ O Parcial cobre só MySQL. O tema norteador (Plano, p. 5–6) cita **JavaScript,
 | Item do tema | Evidência no projeto |
 |---|---|
 | JavaScript / React | `frontend/` |
-| API | `backend/` (Express, 8 endpoints) |
+| API | `backend/` (Express: público, cliente e painel) |
 | Banco de dados | `database/mysql/` |
 | Controle de versão | repositório Git no GitHub |
-| Testes | `backend`: 19 testes · `frontend`: 5 testes (fluxo do cliente e do painel) |
+| Testes | `backend`: 33 testes · `frontend`: 13 testes (fluxo do cliente, conta e painel) |
 | Acessibilidade | rótulos, foco, navegação por teclado, `aria-live`, contraste — **falta auditoria** |
 | Computação em nuvem | ⏳ **falta publicar** (API + MySQL + front) |
 
@@ -64,13 +68,23 @@ O Parcial cobre só MySQL. O tema norteador (Plano, p. 5–6) cita **JavaScript,
 - Conferir a edição vigente da NBR citada nas referências e a formatação de Vanni (2005) (ano entre parênteses fora do padrão das demais).
 - Data de acesso das referências: 19/09/2026 (ok), mas confirme que os links ainda abrem.
 
+### 2.10 Outros pontos encontrados na releitura do PDF atual
+- **Storyboard citado e ausente (p. 13):** o texto diz que foi elaborado um storyboard e escreve "Imagem 2.", mas o PDF só tem imagens nas páginas 11, 14 e 15. Incluir a figura (com legenda e fonte) ou retirar a frase.
+- **Sujeitos da pesquisa (2.4.1):** o texto diz que participaram "proprietária e clientes frequentes", mas os instrumentos citados (observação e entrevista) foram só com a proprietária. Ajustar o texto ou informar como os clientes foram ouvidos.
+- **"Perda de clientes" (2.4.1):** aparece como fato, sem evidência no relatório. Atribuir à fala da profissional ou apresentar o dado.
+- **Conclusão (p. 16):** diz que o banco é "capaz de substituir o controle manual". Só o banco não substitui nada; reformular como "base" para o sistema. No Final, incluir uma seção própria de **Considerações finais** (resultados, limitações, trabalhos futuros).
+- **DER (Figura 1):** o relacionamento `servico` → `categoria_servico` passa por trás da tabela `agendamento`, e parece que a categoria se liga ao agendamento. Reorganizar o layout (categoria ao lado de `servico`) e gerar de novo depois do `02` e do `04` (8 e 9 tabelas, com `bloqueio_agenda` e `conta_cliente`).
+- **Prints:** os comentários do SQL aparecem nas imagens ("-- Vai dar ERRO de propósito", "-- Agora vê se entrou bonitinho"). Cortar a imagem ou trocar por comentários neutros.
+- **Fundamentação teórica:** hoje só cobre design thinking, aplicações web e gestão de serviços. Para o Final, acrescentar fontes sobre **acessibilidade na web** (ex.: WCAG, do W3C), **API REST**, **banco relacional e transações/concorrência**, **proteção de dados (LGPD, Lei 13.709/2018)** e **usabilidade**. Confirmar cada referência antes de citar.
+- **Web Services (2.3.3):** a citação de Freire (2010) fala de serviços web em geral. Se mantiver, ligar ao que o sistema faz (API REST).
+
 ## 3. O que o Relatório Final já pode incluir (resultados novos)
 
 - **Arquitetura** em 3 camadas: React → Express → MySQL.
 - **Regras de negócio na API:** horários livres calculados a partir da grade semanal, folgas e agendamentos; sem horários no passado; antecedência mínima; cliente identificado pelo telefone.
 - **Prevenção de conflitos** em duas camadas (API + trigger) e proteção contra concorrência.
 - **Telas:** agendamento do cliente em 3 etapas, cancelamento pelo cliente, login e agenda diária da profissional.
-- **Testes automatizados:** 24 (19 API + 5 interface).
+- **Testes automatizados:** 46 (33 API + 13 interface).
 - Limitações: ver 2.2 (pagamentos), 2.5 e lembretes de WhatsApp.
 
 ## 4. Pendências de validação (não dá para eu inferir) 👥
