@@ -1,6 +1,6 @@
 # Próximas etapas e instruções
 
-> Atualizado em **09/10/2026** (Quinzena 5: 05/10 a 18/10). Datas e responsáveis seguem o
+> Atualizado em **21/10/2026**: a Quinzena 5 terminou em 18/10 e estamos na **Quinzena 6 (19/10 a 01/11)**. Datas e responsáveis seguem o
 > [Plano de Ação](../PLANO%20DE%20A%C3%87%C3%83O%20GRUPO%204.pdf). Onde o Plano não diz quem faz algo novo, está
 > marcado como **sugestão**: o grupo decide.
 
@@ -17,9 +17,9 @@ agenda, serviços, horários e folgas) e regra anti-conflito de horário.
 
 | Quando | Etapa | O que entrega | Responsáveis no Plano |
 |---|---|---|---|
-| **até 12/10** (sugestão) | **A. Validar no MySQL real** | Roteiro da seção 3 cumprido e resultados registrados | Mayer e Samara (integração) + Todos (testes preliminares) |
-| **até 18/10** | **B. Fechar o que falta do sistema** | Clientes, relatórios e remarcar (seção 4); decisões em aberto (seção 5) | Edinaldo e Lucas (serviços); Amanda e Marcela (agendamento); Mayer e Nicolas (acessibilidade) |
-| **19/10 a 01/11** | **C. Testes e validação** | Testes funcionais, integração, acessibilidade; validação com a profissional (seção 6) | Edinaldo e Lucas; Nicolas; Amanda e Marcela; Mayer e Samara; Todos |
+| **21/10 a 24/10** (sugestão) | **A. Validar no MySQL real** | Roteiro da seção 3 cumprido e resultados registrados | Mayer e Samara (integração) + Todos (testes preliminares) |
+| **22/10 a 27/10** (sugestão; depois disso, **congelar** novas funções) | **B. Fechar o que falta do sistema** | Clientes, relatórios e remarcar (seção 4); decisões em aberto (seção 5) | Edinaldo e Lucas (serviços); Amanda e Marcela (agendamento); Mayer e Nicolas (acessibilidade) |
+| **25/10 a 01/11** | **C. Testes e validação** (a Quinzena 6 já começou: ir testando enquanto B termina) | Testes funcionais, integração, acessibilidade; validação com a profissional (seção 6) | Edinaldo e Lucas; Nicolas; Amanda e Marcela; Mayer e Samara; Todos |
 | **02/11 a 06/11** | **D. Vídeo e Relatório Final** | Vídeo e relatório entregues em **06/11** (seção 8) | Amanda e Marcela (roteiro); Samara (relatório e entrega); Todos (revisão) |
 | Opcional | **E. Publicar na internet** | Site no ar com endereço (seção 7) | sugestão: Mayer e Nicolas |
 
@@ -107,7 +107,9 @@ servem de evidência no Relatório Final.
 
 ---
 
-## 4. Etapa B: o que falta construir (até 18/10)
+## 4. Etapa B: o que falta construir (até 27/10, depois congelar)
+
+> **Prazo curto:** restam ~11 dias da Quinzena 6. Por isso, a ordem abaixo já considera cortar: **remarcar** e **WhatsApp** podem virar "trabalhos futuros" no Relatório Final se o tempo apertar. Clientes e relatórios (itens 2 e 3) são o mínimo útil para a profissional.
 
 Em ordem de prioridade (as duas primeiras são as que mais pesam para a profissional):
 
@@ -142,7 +144,7 @@ Marque a decisão e me avise para eu ajustar o sistema e a documentação. A col
 
 ---
 
-## 6. Etapa C: testes e validação (19/10 a 01/11)
+## 6. Etapa C: testes e validação (19/10 a 01/11, em andamento)
 
 ### 6.1 Testes funcionais (Edinaldo e Lucas)
 Repetir o roteiro da seção 3.3 já no ambiente final e acrescentar:
@@ -254,4 +256,4 @@ Dica: ensaiar com o **modo demo**, que tem dados prontos e não depende do banco
 | Profissional pedir mudanças tarde | Retrabalho na reta final | Mostrar o sistema a ela **já nesta quinzena** (modo demo) |
 | Pouco tempo na Quinzena 7 | Relatório apressado | Ir escrevendo as seções do relatório durante a Quinzena 6 |
 | Visual de celular só testado em simulador | Surpresas na validação | Testar em celular real na Etapa C |
-| Nome/fotos provisórios no vídeo | Aparência amadora | Definir nome e fotos até 25/10 |
+| Nome/fotos provisórios no vídeo | Aparência amadora | Definir nome e fotos até 28/10 |
