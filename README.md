@@ -135,6 +135,13 @@ npm run dev
 ```
 Abra `http://localhost:3001/api/saude` → deve aparecer `{"ok":true}`. Depois `http://localhost:3001/api/servicos` → lista dos serviços. Em outro terminal, `cd frontend && npm run dev` e use o site normalmente.
 
+**Verificar a ligação com o banco automaticamente** (com a API parada):
+```bash
+cd backend
+npm run verificar
+```
+Roda 20 verificações no MySQL do `.env` (agendar, conflito, concorrência, trigger, cancelar, folga, conta de cliente) e salva `backend/resultado-verificacao.txt` para o relatório. Grava dados `[TESTE]`: use só o banco de desenvolvimento.
+
 **Se algo der erro**, anote a mensagem do terminal (sem a senha) e abra uma *issue* ou fale com o grupo.
 
 ## 5. Como o sistema funciona
@@ -191,6 +198,8 @@ cd backend  && npm test    # horários livres + API pública e do painel (33 tes
 cd frontend && npm test    # fluxo do cliente e do painel ligados à API (13 testes)
 ```
 Os testes não precisam de MySQL (usam o repositório em memória). A ligação com o MySQL real ainda precisa ser validada (ver seção 1).
+
+`cd backend && npm run verificar` roda o roteiro de ponta a ponta **contra o MySQL real** (ver seção 4.2); `npm run verificar:demo` faz o mesmo em memória.
 
 ## 8. Como trabalhamos (Git)
 - **Nunca** commitar o arquivo `.env`.

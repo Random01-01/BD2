@@ -76,7 +76,21 @@ conexão, a mensagem do terminal diz o motivo (senha, porta, banco inexistente).
 
 Em outro terminal: `cd frontend`, `npm install`, `npm run dev`, e abra `http://localhost:5173`.
 
-### 3.3 Roteiro de testes no MySQL (marque ✅ ou ❌)
+### 3.3 Verificação automática (rode primeiro) e roteiro manual
+
+**Atalho:** com o `.env` pronto e a API **parada** (feche o `npm start`), rode na pasta `backend`:
+
+```
+npm run verificar
+```
+
+O script usa o MySQL do `.env`, executa 20 verificações (serviço, horários, agendamento, conflito, **concorrência com 6 pedidos simultâneos**, **trigger do banco**, cancelamento, folga e conta de cliente) e escreve `OK` ou `FALHOU` em cada uma. O resultado fica salvo em `backend/resultado-verificacao.txt` (sem senhas, com a versão do MySQL): **anexe ao Relatório Final e mande o arquivo se algo falhar**.
+
+- Precisa do `03_dev_admin.sql` executado (login `admin@mariana.com` / `admin123`), ou use as variáveis `ADMIN_EMAIL` e `ADMIN_SENHA`.
+- Grava dados de teste marcados com `[TESTE]` e, no fim, cancela os agendamentos e desativa o serviço. As contas de cliente de teste (`teste-...@exemplo.com`) ficam no banco. **Use o banco de desenvolvimento, nunca o de uso real.**
+- `npm run verificar:demo` roda o mesmo roteiro em memória (sem banco), só para ver o script funcionando.
+
+Depois, o roteiro manual abaixo confere o que o script não vê (telas e visual). Marque ✅ ou ❌:
 
 | # | O que fazer | Resultado esperado | Resultado |
 |---|---|---|---|

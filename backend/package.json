@@ -11,7 +11,9 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --test",
-    "demo": "node src/server.js --demo"
+    "demo": "node src/server.js --demo",
+    "verificar": "node scripts/verificar.js",
+    "verificar:demo": "node scripts/verificar.js --demo"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
