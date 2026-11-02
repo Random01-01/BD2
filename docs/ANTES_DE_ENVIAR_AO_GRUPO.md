@@ -114,7 +114,7 @@ Depois apague a pasta `teste-grupo`.
 ## Parte 8. Documentação e Git (10 min)
 
 - [ ] **README, seção 1 (situação atual):** reflete o que está pronto (remarcar, clientes e relatórios agora estão ✅).
-- [ ] **`docs/PROXIMAS_ETAPAS.md` (seção 5) e README (seção 11):** decisões em aberto do grupo (status inicial CONFIRMADO ou PENDENTE, prazo de cancelamento, passo de 30 min). Leve para a reunião.
+- [ ] **`docs/PROXIMAS_ETAPAS.md` (seção 5):** decisões em aberto do grupo (status inicial CONFIRMADO ou PENDENTE, prazo de cancelamento, passo de 30 min). Leve para a reunião.
 - [ ] Mensagens de commit em português e claras.
 - [ ] No GitHub (no navegador, **aba anônima**): o README aparece certinho, não há `.env`, e a pasta `docs/` abre.
 - [ ] `git status` limpo e `git log origin/arena/01a0efcc-bd2..HEAD` sem nada (tudo enviado).
