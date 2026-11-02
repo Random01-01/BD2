@@ -69,6 +69,7 @@ BD2/
 │   ├── mysql/             # 01 (original), 02 (melhorias), 03 (senha de teste)
 │   └── postgres/          # versão alternativa — NÃO usada no momento
 ├── docs/                  # modelagem, fluxos e revisão do Relatório Parcial
+├── iniciar.bat            # Windows: sobe API + site em duas janelas (atalho)
 ├── docker-compose.yml     # MySQL local opcional
 ├── PLANO DE AÇÃO GRUPO 4.pdf
 └── RELATÓRIO-PARCIAL-PI-2026.pdf
@@ -83,6 +84,20 @@ BD2/
 - Um editor, por exemplo o VS Code.
 
 Confira no terminal: `git --version`, `node -v` (precisa ser 18.11 ou maior) e `npm -v`.
+
+### Atalho no Windows: `iniciar.bat`
+Na pasta raiz do projeto, o `iniciar.bat` faz **tudo de uma vez**: abre **duas janelas** (a **API** e o **site**), roda `npm install` em cada uma e compila o site antes de iniciar. Não precisa abrir terminais nem digitar comandos do npm.
+
+| Como abrir | O que faz |
+|---|---|
+| Dois cliques em `iniciar.bat` (ou `iniciar.bat` no `cmd`) | API ligada ao **MySQL** do `backend\.env` + site |
+| `iniciar.bat demo` (no `cmd`) | API com **dados fictícios em memória** (sem banco) + site |
+
+- Quando a janela do site mostrar `Local: http://localhost:5173/`, abra esse endereço no navegador. Para o celular (mesmo Wi-Fi), use o endereço `Network` que aparece nessa janela.
+- Para parar: feche as duas janelas (ou `Ctrl+C` em cada uma).
+- O Node.js precisa estar instalado (4.0). O modo MySQL precisa do `.env` configurado (4.2) e do banco criado.
+- Na primeira vez demora, por causa do `npm install`. Depois de mudar o código do site, feche e abra de novo (ele recompila).
+- Prefere controlar à mão (ou não está no Windows)? Use os comandos abaixo.
 
 ### 4.1 Baixar o projeto e testar sem banco (modo demo)
 ```bash
@@ -132,7 +147,7 @@ Se a senha tiver caracteres especiais (`@`, `#`, `/`), escreva-os codificados (`
 ```bash
 npm run dev
 ```
-Abra `http://localhost:3001/api/saude` → deve aparecer `{"ok":true}`. Depois `http://localhost:3001/api/servicos` → lista dos serviços. Em outro terminal, `cd frontend && npm run dev` e use o site normalmente.
+Abra `http://localhost:3001/api/saude` → deve aparecer `{"ok":true}`. Depois `http://localhost:3001/api/servicos` → lista dos serviços. Em outro terminal, `cd frontend && npm run dev` e use o site normalmente. (No Windows, o `iniciar.bat` na raiz faz essas duas etapas sozinho.)
 
 **Verificar a ligação com o banco automaticamente** (com a API parada):
 ```bash
