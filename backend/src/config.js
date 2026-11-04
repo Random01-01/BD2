@@ -7,7 +7,9 @@ const int = (valor, padrao) => {
   return Number.isFinite(n) ? n : padrao;
 };
 
-const DIST_PADRAO = fileURLToPath(new URL('../../frontend/dist', import.meta.url));
+// frontend/dist ao lado do backend. O try/catch cobre ambientes sem URL "file:" (ex.: testes do frontend em jsdom).
+let DIST_PADRAO = '';
+try { DIST_PADRAO = fileURLToPath(new URL('../../frontend/dist', import.meta.url)); } catch { DIST_PADRAO = ''; }
 
 export const config = {
   port: int(process.env.PORT, 3001),
@@ -21,7 +23,7 @@ export const config = {
   antecedenciaMinutos: int(process.env.ANTECEDENCIA_MINUTOS, 60),
   fusoHorario: 'America/Sao_Paulo',
   // Publicação em um serviço só: a API também entrega o site (frontend/dist), se ele já foi compilado.
-  siteDir: process.env.SITE_DIR || (process.env.SERVIR_SITE === 'false' ? '' : (existsSync(DIST_PADRAO) ? DIST_PADRAO : '')),
+  siteDir: process.env.SITE_DIR || (process.env.SERVIR_SITE === 'false' ? '' : (DIST_PADRAO && existsSync(DIST_PADRAO) ? DIST_PADRAO : '')),
   // Atrás de proxy (Render etc.): TRUST_PROXY=1 para o limite de tentativas de login enxergar o IP real.
   trustProxy: int(process.env.TRUST_PROXY, 0),
 };
