@@ -96,6 +96,8 @@ Na pasta raiz do projeto, o `iniciar.bat` faz **tudo de uma vez**: abre **duas j
 - Na primeira vez demora, por causa do `npm install`. Depois de mudar o código do site, feche e abra de novo (ele recompila).
 - Prefere controlar à mão (ou não está no Windows)? Use os comandos abaixo.
 
+**Quer o sistema num link na internet?** Veja [`docs/PUBLICAR.md`](docs/PUBLICAR.md). A API também entrega o site compilado (`frontend/dist`), então basta **um** serviço.
+
 ### 4.1 Baixar o projeto e testar sem banco (modo demo)
 ```bash
 git clone https://github.com/Random01-01/BD2.git
@@ -209,7 +211,7 @@ Base: `/api`. Detalhes e exemplos em [`backend/README.md`](backend/README.md).
 
 ## 7. Testes
 ```bash
-cd backend  && npm test    # horários livres + API pública e do painel (46 testes)
+cd backend  && npm test    # horários livres + API pública e do painel (50 testes)
 cd frontend && npm test    # fluxo do cliente e do painel ligados à API (21 testes)
 ```
 Os testes automatizados não precisam de MySQL (usam o repositório em memória). A ligação com o MySQL real foi verificada com `npm run verificar` (ver seção 1).
@@ -252,6 +254,7 @@ Conforme o Plano de Ação.
 - [`docs/RELATORIO_FINAL_RASCUNHO.md`](docs/RELATORIO_FINAL_RASCUNHO.md) — rascunho do Relatório Final (Samara)
 - [`docs/ROTEIRO_VIDEO.md`](docs/ROTEIRO_VIDEO.md) — roteiro do vídeo, cena a cena
 - [`docs/ANTES_DE_ENVIAR_AO_GRUPO.md`](docs/ANTES_DE_ENVIAR_AO_GRUPO.md) — passo a passo para conferir tudo antes de enviar o projeto ao grupo
+- [`docs/PUBLICAR.md`](docs/PUBLICAR.md) — publicar em um link grátis (Render + MySQL da Aiven) e opções de domínio gratuito
 - [`docs/PROXIMAS_ETAPAS.md`](docs/PROXIMAS_ETAPAS.md) — roteiro de testes no MySQL, etapas até 06/11 e instruções para o grupo
 - [`docs/REVISAO_RELATORIO_PARCIAL.md`](docs/REVISAO_RELATORIO_PARCIAL.md) — o que ajustar no relatório
 - [`database/mysql/README.md`](database/mysql/README.md) — montar o banco

@@ -18,7 +18,7 @@ Prontos (02/11): **remarcar pela conta do cliente**, **clientes** e **relatório
 
 ## 1. Onde estamos
 
-**Pronto e testado só com dados em memória** (backend 46 testes, frontend 21 testes):
+**Pronto e testado só com dados em memória** (backend 50 testes, frontend 21 testes):
 site do cliente (home, agendar com ou sem conta, cancelar, conta de cliente), painel da profissional (dashboard,
 agenda, serviços, horários e folgas) e regra anti-conflito de horário.
 
@@ -205,7 +205,7 @@ Reaproveitar o `docs/REVISAO_RELATORIO_PARCIAL.md`, que lista o que corrigir em 
 - "Pagamentos": explicar que só se registra o valor cobrado.
 - A estatística de "80% dos conflitos" precisa de fonte ou deve ser reformulada.
 - A prevenção de conflito tem dois níveis (trigger + trava na API); explicar o limite do trigger sozinho.
-- Resultados: testes automatizados (46 + 21), roteiro do MySQL (seção 3.3), prints.
+- Resultados: testes automatizados (50 + 21), roteiro do MySQL (seção 3.3), prints.
 - Limitações e trabalhos futuros: verificação de e-mail, pagamento online, observações por cliente.
 - Referências e formatação conforme modelo da UNIVESP/ABNT.
 

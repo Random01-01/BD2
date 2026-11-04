@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import path from 'node:path';
 import { ConflitoError } from './erros.js';
 import { rotasAdmin } from './routes/admin.js';
 import { rotasCliente } from './routes/cliente.js';
@@ -25,7 +26,9 @@ export function criarApp(repo, config) {
   }
   const app = express();
   app.disable('x-powered-by');
-  app.use(helmet());
+  if (config.trustProxy) app.set('trust proxy', config.trustProxy);
+  // 'upgrade-insecure-requests': null → o site também pode ser aberto em http (rede local, celular no Wi-Fi).
+  app.use(helmet({ contentSecurityPolicy: { directives: { 'upgrade-insecure-requests': null } } }));
   app.use(cors({ origin: config.corsOrigin.split(',') }));
   app.use(express.json({ limit: '50kb' }));
 
@@ -39,6 +42,20 @@ export function criarApp(repo, config) {
   app.use('/api', comCaptura(rotasCliente(repo, config)));
 
   app.use('/api', (_req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
+  if (config.siteDir) {
+    // Site compilado (React): arquivos estáticos e, para qualquer outra rota, o index.html (React Router).
+    app.use(express.static(config.siteDir, {
+      index: false,
+      setHeaders: (res, arquivo) => {
+        if (arquivo.includes(`${path.sep}assets${path.sep}`)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        else res.setHeader('Cache-Control', 'no-cache');   // index, sw.js e manifest sempre atualizados
+      },
+    }));
+    app.get('*', (_req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
+      res.sendFile(path.join(config.siteDir, 'index.html'));
+    });
+  }
   // eslint-disable-next-line no-unused-vars
   app.use((err, _req, res, _next) => {
     if (err instanceof ConflitoError) return res.status(409).json({ erro: err.message });

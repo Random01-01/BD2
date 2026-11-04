@@ -32,7 +32,7 @@ agendamento, sem conflitos de horário. A metodologia adotada foi o Design Think
 Criar e Prototipar e Implementar e Testar. O sistema foi construído com React (interface), Node.js com Express (API) e
 banco de dados relacional MySQL, com controle de versão em Git/GitHub. O cálculo dos horários livres é feito na API a
 partir da grade semanal, das folgas e dos agendamentos existentes, e a regra de não sobreposição é garantida em dois
-níveis: trava transacional na API e *trigger* no banco. Os testes automatizados (46 de API e 21 de interface) e a
+níveis: trava transacional na API e *trigger* no banco. Os testes automatizados (50 de API e 21 de interface) e a
 verificação ponta a ponta contra um MySQL real (22 verificações, incluindo 6 requisições simultâneas ao mesmo horário)
 foram bem-sucedidos. Conclui-se que o sistema atende ao escopo definido no Plano de Ação e constitui uma base
 funcional para uso pela profissional; ficam como limitações a ausência de validação da interface com a profissional e
@@ -188,7 +188,7 @@ mensagens anunciadas por `aria-live` e contraste de cores. **Não foi realizada 
 
 | Teste | O que cobre | Resultado |
 |---|---|---|
-| Automatizados da API (46) | cálculo de horários, agendar, conflito, cancelar, remarcar, painel, clientes, relatórios, conta de cliente, permissões | 46 de 46 passaram |
+| Automatizados da API (50) | cálculo de horários, agendar, conflito, cancelar, remarcar, painel, clientes, relatórios, conta de cliente, permissões | 50 de 50 passaram |
 | Automatizados da interface (21) | fluxo do cliente, conta, remarcar, painel, clientes, relatórios, instalação do PWA | 21 de 21 passaram |
 | Verificação ponta a ponta no **MySQL real** (22 passos) | login, CRUD de serviço e horário, agendamento, conflito 409, concorrência (6 simultâneos), *trigger*, cancelamento, folga, conta de cliente | **22 de 22 OK** em 02/11/2026 (roteiro anterior à remarcação, clientes e relatórios; o script atual tem 27 passos: **[PREENCHER o novo resultado]**) **[PREENCHER versão do MySQL, que consta no `resultado-verificacao.txt`]** |
 | *Triggers* no DBeaver/Workbench (`database/mysql/testes/teste_trigger.sql`) | inserção válida, sobreposta, encostada e `UPDATE` em conflito | **[PREENCHER com prints]** |

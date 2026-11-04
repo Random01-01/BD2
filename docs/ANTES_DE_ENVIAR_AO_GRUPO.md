@@ -28,7 +28,7 @@ cd ..\frontend
 npm test
 npm run build
 ```
-**Esperado:** backend **46 passaram**, frontend **21 passaram**, e o build termina com `built in ...`.
+**Esperado:** backend **50 passaram**, frontend **21 passaram**, e o build termina com `built in ...`.
 Se algum falhar, **pare** e me envie o texto do erro (sem senhas).
 
 ## Parte 3. Segurança (15 min, obrigatório)
