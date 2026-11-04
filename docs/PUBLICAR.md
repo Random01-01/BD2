@@ -114,5 +114,5 @@ Depois de conseguir o domínio: no Render, **Settings → Custom Domains → Add
 - Não há verificação de e-mail/telefone nem "esqueci a senha" (limitação já registrada).
 
 ## 6. E se não der tempo / der problema?
-- **Plano B imediato:** túnel `cloudflared` a partir do seu computador (veja `docs/MOBILE.md` e `docs/PASSO_A_PASSO_FINAL.md`, Parte 7): link temporário, MySQL local.
+- **Plano B imediato:** túnel `cloudflared` a partir do seu computador (veja `docs/PASSO_A_PASSO_FINAL.md`, Parte 8-B): link temporário, MySQL local.
 - **Modo demo na nuvem:** no Render, **sem** Aiven: não configure `DATABASE_URL`/`DB_SSL`, e troque o Start Command por `npm run demo --prefix backend`. Os dados ficam em memória e **somem a cada reinício** (login `admin@mariana.com` / `admin123`: **só para demonstração, troque ou avise**). Serve para o grupo ver a interface, mas **não** prova o MySQL.

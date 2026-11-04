@@ -89,7 +89,7 @@ Suba o sistema com `iniciar.bat` (na pasta `BD2`; ele abre a API e o site em dua
 - [ ] **Clientes:** busca por nome/telefone; **Ver histórico** de uma cliente.
 - [ ] **Relatórios:** mês atual, mês passado, **Baixar lista (CSV)** abre no Excel.
 
-**Celular** (veja `docs/PASSO_A_PASSO_FINAL.md`, Partes 7 e 8, e `docs/MOBILE.md`)
+**Celular** (veja `docs/PASSO_A_PASSO_FINAL.md`, Partes 7 e 8; o túnel `cloudflared` é a Parte 8-B)
 - [ ] Abre no celular (mesmo Wi-Fi ou túnel `cloudflared`).
 - [ ] Layout legível, botões fáceis de tocar, agendamento funciona.
 - [ ] Instalar na tela inicial (precisa de HTTPS, ou seja, o túnel) e abrir pelo ícone.
